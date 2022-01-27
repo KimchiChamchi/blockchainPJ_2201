@@ -260,6 +260,7 @@ const updateUnspentTxOuts = (aTransactions, aUnspentTxOuts) => {
   return resultingUnspentTxOuts;
 };
 
+// 트랜잭션
 const processTransactions = (aTransactions, aUnspentTxOuts, blockIndex) => {
   if (!validateBlockTransactions(aTransactions, aUnspentTxOuts, blockIndex)) {
     console.log("invalid block transactions");

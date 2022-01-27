@@ -108,8 +108,9 @@ const validateBlockTransactions = (
     return false;
   }
 
-  // all but coinbase transactions
+  // 일반 트랜잭션들(코인베이스 트랜잭션을 제외한 전체 트랜잭션)
   const normalTransactions = aTransactions.slice(1);
+  // 일반 트랜잭션들을 검사해서 모두 정상이면 true 반환
   return normalTransactions
     .map((tx) => validateTransaction(tx, aUnspentTxOuts))
     .reduce((a, b) => a && b, true);
@@ -259,6 +260,7 @@ const updateUnspentTxOuts = (aTransactions, aUnspentTxOuts) => {
   return resultingUnspentTxOuts;
 };
 
+// 트랜잭션
 const processTransactions = (aTransactions, aUnspentTxOuts, blockIndex) => {
   if (!validateBlockTransactions(aTransactions, aUnspentTxOuts, blockIndex)) {
     console.log("invalid block transactions");

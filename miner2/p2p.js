@@ -61,39 +61,52 @@ const initMessageHandler = (ws) => {
         console.log("받은 메시지 " + data + " 를 분석할 수 없어요");
         return;
       }
-
+      console.log("메시지 왔어요");
       // 메시지 타입에 따라 무엇을 할지...
       switch (message.type) {
         case MessageType.QUERY_LATEST:
-          console.log("상대가 마지막 블록을 달라고 했어요. 마지막 블록을 ");
+          console.log(
+            "상대가 마지막 블록을 달라고 했어요. 답장으로 마지막 블록을 보낼게요"
+          );
           write(ws, responseLatestMsg());
           break;
         case MessageType.QUERY_ALL:
+          console.log(
+            "상대가 블록체인을 달라고 했어요. 답장으로 내 블록체인을 보낼게요"
+          );
           write(ws, responseChainMsg());
           break;
         case MessageType.RESPONSE_BLOCKCHAIN:
           const receivedBlocks = JSON.parse(message.data);
           if (receivedBlocks === null) {
             console.log(
-              "invalid blocks received: %s",
+              "받은 메시지에 블록이 담겨있다는데 까보니 뭐가 없네요?",
               JSON.stringify(message.data)
             );
             break;
           }
+          console.log("받은 메시지에 블록이 담겨있어요 내것과 비교해야겠어요");
           handleBlockchainResponse(receivedBlocks);
           break;
         case MessageType.QUERY_TRANSACTION_POOL:
+          console.log(
+            "상대가 트랜잭션풀을 달라고 했어요. 답장에 내 트랜잭션풀을 담아 보낼게요"
+          );
           write(ws, responseTransactionPoolMsg());
           break;
         case MessageType.RESPONSE_TRANSACTION_POOL:
           const receivedTransactions = JSON.parse(message.data);
           if (receivedTransactions === null) {
             console.log(
-              "invalid transaction received: %s",
+              "받은 메시지에 트랜잭션풀이 들어있다는데 까보니 뭐가 없네요?",
               JSON.stringify(message.data)
             );
             break;
           }
+          console.log(
+            "받은 메시지에 트랜잭션풀이 있어요. 검증해서 내 트랜잭션풀에 담을거에요"
+          );
+          // 받은 트랜잭션들
           receivedTransactions.forEach((transaction) => {
             try {
               BC.handleReceivedTransaction(transaction);
@@ -130,10 +143,13 @@ const queryChainLengthMsg = () => ({
 const queryAllMsg = () => ({ type: MessageType.QUERY_ALL, data: null });
 
 // 상대에게 내 블록체인 전체를 담아서 보내는 메시지
-const responseChainMsg = () => ({
-  type: MessageType.RESPONSE_BLOCKCHAIN,
-  data: JSON.stringify(BC.getBlockchain()),
-});
+function responseChainMsg() {
+  const { getBlockchain } = require("./blockchain");
+  return {
+    type: MessageType.RESPONSE_BLOCKCHAIN,
+    data: JSON.stringify(getBlockchain()),
+  };
+}
 
 // 상대에게 내 마지막 블록 담아서 보내는 메시지
 function responseLatestMsg() {
@@ -170,7 +186,11 @@ const initErrorHandler = (ws) => {
 
 // 상대에게 블록체인 또는 마지막 블록 받으면 처리할 매뉴얼
 const handleBlockchainResponse = (receivedBlocks) => {
-  const { isValidBlockStructure, getLatestBlock } = require("./blockchain");
+  const {
+    isValidBlockStructure,
+    getLatestBlock,
+    replaceChain,
+  } = require("./blockchain");
   // 전달받은 블록or블록체인의 길이가 0
   if (receivedBlocks.length === 0) {
     console.log("이상해요. 전달받은 블록체인의 길이가 0이래요");
@@ -207,7 +227,7 @@ const handleBlockchainResponse = (receivedBlocks) => {
       console.log(
         "전달받은 블록체인이 내것보다 더 기니까 검증해봐서 교체하던가 해야짐"
       );
-      BC.replaceChain(receivedBlocks);
+      replaceChain(receivedBlocks);
     }
     // 전달받은 블록or블록체인이 내것과 길이가 같거나 짧으면 아무것도 안하기
   } else {
@@ -215,6 +235,7 @@ const handleBlockchainResponse = (receivedBlocks) => {
   }
 };
 
+// 마지막 블록 소문내기
 const broadcastLatest = () => {
   broadcast(responseLatestMsg());
 };
@@ -232,6 +253,7 @@ const connectToPeers = (newPeer) => {
   });
 };
 
+// 트랜잭션 풀 소문내기
 const broadCastTransactionPool = () => {
   broadcast(responseTransactionPoolMsg());
 };

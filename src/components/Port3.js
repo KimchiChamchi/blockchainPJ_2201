@@ -39,7 +39,7 @@ function Port3() {
       return alert(`데이터를 넣어주세용`);
     }
     await axios
-      .post(`http://localhost:3003/mineBlock`, { data: [data] })
+      .post(`http://localhost:3002/mineBlock`, { data: [data] })
       .then((res) => alert(res.data));
   };
 

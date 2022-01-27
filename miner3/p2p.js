@@ -104,8 +104,9 @@ const initMessageHandler = (ws) => {
             break;
           }
           console.log(
-            "받은 메시지에 트랜잭션풀이 있어요. 검증해서 내 트랜잭션풀"
+            "받은 메시지에 트랜잭션풀이 있어요. 검증해서 내 트랜잭션풀에 담을거에요"
           );
+          // 받은 트랜잭션들
           receivedTransactions.forEach((transaction) => {
             try {
               BC.handleReceivedTransaction(transaction);
@@ -142,10 +143,13 @@ const queryChainLengthMsg = () => ({
 const queryAllMsg = () => ({ type: MessageType.QUERY_ALL, data: null });
 
 // 상대에게 내 블록체인 전체를 담아서 보내는 메시지
-const responseChainMsg = () => ({
-  type: MessageType.RESPONSE_BLOCKCHAIN,
-  data: JSON.stringify(BC.getBlockchain()),
-});
+function responseChainMsg() {
+  const { getBlockchain } = require("./blockchain");
+  return {
+    type: MessageType.RESPONSE_BLOCKCHAIN,
+    data: JSON.stringify(getBlockchain()),
+  };
+}
 
 // 상대에게 내 마지막 블록 담아서 보내는 메시지
 function responseLatestMsg() {
@@ -182,7 +186,11 @@ const initErrorHandler = (ws) => {
 
 // 상대에게 블록체인 또는 마지막 블록 받으면 처리할 매뉴얼
 const handleBlockchainResponse = (receivedBlocks) => {
-  const { isValidBlockStructure, getLatestBlock } = require("./blockchain");
+  const {
+    isValidBlockStructure,
+    getLatestBlock,
+    replaceChain,
+  } = require("./blockchain");
   // 전달받은 블록or블록체인의 길이가 0
   if (receivedBlocks.length === 0) {
     console.log("이상해요. 전달받은 블록체인의 길이가 0이래요");
@@ -219,7 +227,7 @@ const handleBlockchainResponse = (receivedBlocks) => {
       console.log(
         "전달받은 블록체인이 내것보다 더 기니까 검증해봐서 교체하던가 해야짐"
       );
-      BC.replaceChain(receivedBlocks);
+      replaceChain(receivedBlocks);
     }
     // 전달받은 블록or블록체인이 내것과 길이가 같거나 짧으면 아무것도 안하기
   } else {
