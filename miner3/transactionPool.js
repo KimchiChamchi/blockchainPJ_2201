@@ -40,7 +40,7 @@ const updateTransactionPool = (unspentTxOuts) => {
   for (const tx of transactionPool) {
     // 그 트랜잭션의 인풋 개수만큼 반복
     for (const txIn of tx.txIns) {
-      // 트랜잭션-------------------------------------해석실패
+      // 트랜잭션-------------------------------------해석실패ㅜㅜ
       if (!hasTxIn(txIn, unspentTxOuts)) {
         invalidTxs.push(tx);
         break;
