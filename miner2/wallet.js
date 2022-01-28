@@ -5,7 +5,7 @@ const TX = require("./transaction");
 
 const EC = new ecdsa.ec("secp256k1");
 const privateKeyLocation =
-  process.env.PRIVATE_KEY || "miner3/wallet/private_key";
+  process.env.PRIVATE_KEY || "miner2/wallet/private_key";
 
 // 지갑에서 비밀키 가져오기
 const getPrivateFromWallet = () => {
