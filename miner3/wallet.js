@@ -90,7 +90,7 @@ const createTxOuts = (receiverAddress, myAddress, amount, leftOverAmount) => {
   if (leftOverAmount === 0) {
     return [txOut1];
   } else {
-    const leftOverTx = new TxOut(myAddress, leftOverAmount);
+    const leftOverTx = new TX.TxOut(myAddress, leftOverAmount);
     return [txOut1, leftOverTx];
   }
 };
@@ -118,6 +118,7 @@ const filterTxPoolTxs = (unspentTxOuts, transactionPool) => {
   return _.without(unspentTxOuts, ...removable);
 };
 
+// 트랜잭션 만들어주기 (보낼주소, 코인양, 비밀키, 공용장부, 트랜잭션풀)
 const createTransaction = (
   receiverAddress,
   amount,
@@ -125,7 +126,6 @@ const createTransaction = (
   unspentTxOuts,
   txPool
 ) => {
-  console.log("txPool: %s", JSON.stringify(txPool));
   const myAddress = TX.getPublicKey(privateKey);
   const myUnspentTxOutsA = unspentTxOuts.filter(
     (uTxO) => uTxO.address === myAddress
@@ -134,6 +134,7 @@ const createTransaction = (
   const myUnspentTxOuts = filterTxPoolTxs(myUnspentTxOutsA, txPool);
 
   // filter from unspentOutputs such inputs that are referenced in pool
+  // 공용장부에서 트랜잭션풀에 있는 같은
   const { includedUnspentTxOuts, leftOverAmount } = findTxOutsForAmount(
     amount,
     myUnspentTxOuts
@@ -147,8 +148,8 @@ const createTransaction = (
   };
 
   const unsignedTxIns = includedUnspentTxOuts.map(toUnsignedTxIn);
-
   const tx = new TX.Transaction();
+  // console.log(TX.getTransactionId(tx));
   tx.txIns = unsignedTxIns;
   tx.txOuts = createTxOuts(receiverAddress, myAddress, amount, leftOverAmount);
   tx.id = TX.getTransactionId(tx);
@@ -158,6 +159,7 @@ const createTransaction = (
     return txIn;
   });
 
+  console.log("만든 트잭", tx);
   return tx;
 };
 

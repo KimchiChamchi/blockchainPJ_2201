@@ -8,7 +8,7 @@ import {
   Cryptocurrencies,
   Navbar,
   // Port1,
-  // Port2,
+  Port2,
   Port3,
 } from "./components";
 import "./App.css";
@@ -32,10 +32,10 @@ const App = () => (
           </Route>
           {/* <Route exact path="/port1" component={Port1}>
             <Port1 />
-          </Route>
+          </Route> */}
           <Route exact path="/port2" component={Port2}>
             <Port2 />
-          </Route> */}
+          </Route>
           <Route exact path="/port3" component={Port3}>
             <Port3 />
           </Route>

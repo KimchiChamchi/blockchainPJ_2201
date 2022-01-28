@@ -31,6 +31,10 @@
     "ws": "^8.4.0"
   },
   "scripts": {
+    "start": "react-scripts start",
+    "a1": "nodemon miner1/main.js",
+    "a2": "nodemon miner2/main.js",
+    "a3": "nodemon miner3/main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

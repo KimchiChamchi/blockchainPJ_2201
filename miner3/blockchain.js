@@ -76,17 +76,20 @@ const genesisBlock = new Block(
   0
 );
 
+// 블록체인 초기(제네시스블록)
 let blockchain = [genesisBlock];
 
 // 미사용 트랜잭션 아웃풋 목록(공용장부).
 // 초기 상태는 제네시스 블록에서 나온 미사용 트랜잭션
 let unspentTxOuts = TX.processTransactions(blockchain[0].data, [], 0);
 
+// 내 블록체인 가져오기
 const getBlockchain = () => blockchain;
 
+// 내 공용장부 가져오기
 const getUnspentTxOuts = () => _.cloneDeep(unspentTxOuts);
 
-// 미사용 트랜잭션 목록 교체
+// 새로만들거나 받은 미사용 트랜잭션 목록(공용장부)로  교체
 const setUnspentTxOuts = (newUnspentTxOut) => {
   console.log("공용장부(unspentTxouts)를 최신화합니다");
   unspentTxOuts = newUnspentTxOut;
@@ -100,6 +103,7 @@ const BLOCK_GENERATION_INTERVAL = 10;
 // 난이도 조절 간격 블록 5개당
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 5;
 
+// 나니도 가져오기
 const getDifficulty = (aBlockchain) => {
   const latestBlock = aBlockchain[blockchain.length - 1];
   if (
@@ -119,10 +123,13 @@ const getAdjustedDifficulty = (latestBlock, aBlockchain) => {
   const timeExpected =
     BLOCK_GENERATION_INTERVAL * DIFFICULTY_ADJUSTMENT_INTERVAL;
   const timeTaken = latestBlock.timestamp - prevAdjustmentBlock.timestamp;
+  // 블록 5개가 새로 채굴될 동안 흐른 시간이 25초 미만이면 난이도 1증가
   if (timeTaken < timeExpected / 2) {
     return prevAdjustmentBlock.difficulty + 1;
+    // 블록 5개가 새로 채굴될 동안 흐른 시간이 100초 초과이면 난이도 1감소
   } else if (timeTaken > timeExpected * 2) {
     return prevAdjustmentBlock.difficulty - 1;
+    // 블록5개 채굴시간이 25~100초 사이이면 난이도 냅두기
   } else {
     return prevAdjustmentBlock.difficulty;
   }
@@ -166,6 +173,7 @@ const generateNextBlock = () => {
   // 내가 채굴했으니 내 지갑 공개키 담은 코인베이스 트랜잭션 생성
   const coinbaseTx = TX.getCoinbaseTransaction(
     WALLET.getPublicFromWallet(),
+    // 아직 블록 추가하기 전 단계이므로 새블록의 인덱스를 넣기위해 마지막블록의 인덱스+1
     getLatestBlock().index + 1
   );
   // 코인베이스 트랜잭션[]이랑 그동안 생긴 트랜잭션[]이랑
@@ -193,10 +201,12 @@ const generatenextBlockWithTransaction = (receiverAddress, amount) => {
     getUnspentTxOuts(),
     TP.getTransactionPool()
   );
+
   const blockData = [coinbaseTx, tx];
   return generateRawNextBlock(blockData);
 };
 
+// 블록 찾기
 const findBlock = (index, previousHash, timestamp, data, difficulty) => {
   let nonce = 0;
   while (true) {
@@ -230,15 +240,19 @@ const getAccountBalance = () => {
   return WALLET.getBalance(WALLET.getPublicFromWallet(), getUnspentTxOuts());
 };
 
+// 트랜잭션 보내기 (내가 누군가에게 코인 보내는 것)
 const sendTransaction = (address, amount) => {
-  const tx = createTransaction(
-    address,
-    amount,
-    WALLET.getPrivateFromWallet(),
-    getUnspentTxOuts(),
-    TP.getTransactionPool()
+  // 트랜잭션 만들어서 <- (누군가의 주소, 코인양, 내지갑주소, 공용장부, 내트랜잭션풀)
+  const tx = WALLET.createTransaction(
+    address, // 내가 A한테 amount만큼 보낼거임 address는 A의 주소
+    amount, // 코인양
+    WALLET.getPrivateFromWallet(), // 코인 꺼낼 내 지갑주소
+    getUnspentTxOuts(), // 공용장부 불러오기
+    TP.getTransactionPool() // 트랜잭션풀 불러오기
   );
+  // 트랜잭션풀에 쑤셔넣고
   TP.addToTransactionPool(tx, getUnspentTxOuts());
+  // 그 트랜잭션풀 방방곡곡 소문내기
   P2P.broadCastTransactionPool();
   return tx;
 };
@@ -455,7 +469,7 @@ const replaceChain = (newBlocks) => {
     );
   }
 };
-
+// 받은 트랜잭션풀에서 트랜잭션 하나씩 검증해서 내 트랜잭션풀에 넣기
 const handleReceivedTransaction = (transaction) => {
   TP.addToTransactionPool(transaction, getUnspentTxOuts());
 };

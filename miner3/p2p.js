@@ -51,6 +51,7 @@ const initConnection = (ws) => {
 
 // 메시지 받으면 따를 매뉴얼
 const initMessageHandler = (ws) => {
+  const { handleReceivedTransaction } = require("./blockchain");
   ws.on("message", (data) => {
     try {
       // 제이슨 형식으로 받은 메시지 원래 형태로 변환
@@ -104,14 +105,14 @@ const initMessageHandler = (ws) => {
             break;
           }
           console.log(
-            "받은 메시지에 트랜잭션풀이 있어요. 검증해서 내 트랜잭션풀에 담을거에요"
+            "받은 메시지에 트랜잭션풀이 있어요. 검증해서 내 트랜잭션풀에 담고 소문낼 거에오"
           );
-          // 받은 트랜잭션들
+          // 받은 트랜잭션들(트랜잭션풀) forEach로 하나씩 풀어서
           receivedTransactions.forEach((transaction) => {
             try {
-              BC.handleReceivedTransaction(transaction);
-              // if no error is thrown, transaction was indeed added to the pool
-              // let's broadcast transaction pool
+              // 검증 후 내 트랜잭션풀에 넣고
+              handleReceivedTransaction(transaction);
+              // 새로 완성된 트랜잭션풀 알리기
               broadCastTransactionPool();
             } catch (e) {
               console.log(e.message);
@@ -176,10 +177,10 @@ const responseTransactionPoolMsg = () => ({
 const initErrorHandler = (ws) => {
   //
   const closeConnection = (myWs) => {
-    console.log(myWs.url + "와 연결이 끊어졌어요");
+    console.log(myWs.url, "와 연결이 끊어졌어요");
     sockets.splice(sockets.indexOf(myWs), 1);
   };
-  // 해당 소켓이 닫히거나 오류가 있으면 연결 끝내기
+  // 해당 소켓이 닫히거나 오류가 있으면 연결목록에서 제거
   ws.on("close", () => closeConnection(ws));
   ws.on("error", () => closeConnection(ws));
 };
@@ -190,6 +191,7 @@ const handleBlockchainResponse = (receivedBlocks) => {
     isValidBlockStructure,
     getLatestBlock,
     replaceChain,
+    addBlockToChain,
   } = require("./blockchain");
   // 전달받은 블록or블록체인의 길이가 0
   if (receivedBlocks.length === 0) {
@@ -212,7 +214,7 @@ const handleBlockchainResponse = (receivedBlocks) => {
     // (전달받은 블록이 내 블록보다 한개 긺)
     if (latestBlockHeld.hash === latestBlockReceived.previousHash) {
       // 내 블록체인에 전달받은 마지막블록 연결하고 동네방네 소문내기
-      if (BC.addBlockToChain(latestBlockReceived)) {
+      if (addBlockToChain(latestBlockReceived)) {
         broadcast(responseLatestMsg());
       }
       // 전달받은 블록or블록체인의 길이가 1일때

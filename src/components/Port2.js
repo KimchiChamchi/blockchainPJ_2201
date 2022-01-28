@@ -6,24 +6,26 @@ function Port2() {
   const [블록데이터, set블록데이터] = useState(""); //생성데이터
   const [peer, setPeer] = useState(""); //생성데이터
   const [peers, setPeers] = useState(" "); //생성데이터
-  const [Wallet, setWallet] = useState([]);
-  const [chainBlocks, setChainBlocks] = useState(""); //db불러온거
+  const [Wallet, setWallet] = useState([]); // 지갑 공개키
+  const [Money, setMoney] = useState("");
+  const [MoneyToAddress, setMoneyToAddress] = useState("");
+  const [Balance, setBalance] = useState([]); // 지갑 잔액
+  const [chainBlocks, setChainBlocks] = useState([]); //db불러온거
   const reverse = [...chainBlocks].reverse(); //배열뒤집어주기
   const [shownBlock, setshownBlock] = useState({});
   const [count, setCount] = useState(0);
   const [delay, setDelay] = useState(1000);
   const [isRunning, setIsRunning] = useState(false);
   const [ok, setOk] = useState(false);
-
   useInterval(
     () => {
-      const data = 블록데이터 || "2번채굴기입니다.";
+      const data = 블록데이터 || "3번채굴기입니다.";
       setIsRunning(false);
       console.log("데이터전송");
       axios
         .post(`http://localhost:3002/mineBlock`, { data: [data] })
-        .then((req) => {
-          console.log(req.data);
+        .then((res) => {
+          console.log(res.data);
           setIsRunning(true);
         });
 
@@ -31,17 +33,6 @@ function Port2() {
     },
     isRunning && ok ? delay : null
   );
-  const [Money, setMoney] = useState("");
-  const [MoneyToAddress, setMoneyToAddress] = useState("");
-  const moneySend = async () => {
-    const data = { Money: Money, MoneyToAddress: MoneyToAddress };
-    if (data.Money.length == 0 || data.MoneyToAddress.length == 0) {
-      //데이터없으면 리네임
-      return alert(`데이터를 넣어주세용`);
-    }
-    await axios.post(`http://localhost:3002/moneySend`, data);
-    // .then((req) => alert(req.data));
-  };
 
   const bcMaker = async () => {
     const data = 블록데이터;
@@ -51,49 +42,64 @@ function Port2() {
     }
     await axios
       .post(`http://localhost:3002/mineBlock`, { data: [data] })
-      .then((req) => alert(req.data));
+      .then((res) => alert(res.data));
   };
 
-  const connect = async () => {
-    await axios.get(`http://localhost:3002/Blocks`).then((req) => {
-      setChainBlocks(req.data);
-      console.log(chainBlocks);
-    });
+  const getBlockchain = async () => {
+    await axios
+      .get(`http://localhost:3002/blocks`)
+      .then((res) => setChainBlocks(res.data));
   };
 
-  const address = async () => {
+  // 지갑 공개키 받아오기
+  const getAddress = async () => {
     await axios
       .get(`http://localhost:3002/address`)
-      .then((req) => setWallet(req.data.address));
-    console.log(Wallet);
+      .then((res) => setWallet(res.data.address));
+  };
+
+  // 지갑 잔액 조회
+  const getBalance = async () => {
+    await axios
+      .get(`http://localhost:3002/balance`)
+      .then((res) => setBalance(res.data.balance));
+  };
+  //
+  const sendTransaction = async () => {
+    await axios
+      .post(`http://localhost:3002/sendTransaction`, {
+        address: MoneyToAddress,
+        amount: Money,
+      })
+      .then((res) => console.log(res.data));
   };
   const stop = async () => {
     await axios
       .post(`http://localhost:3002/stop`)
-      .then((req) => alert(req.data));
+      .then((res) => alert(res.data));
   };
 
   const getpeers = async () => {
-    axios.get(`http://localhost:3002/peers`).then((req) => setPeers(req.data));
+    axios.get(`http://localhost:3002/peers`).then((res) => setPeers(res.data));
   };
   if (peers.length === 0) {
     return setPeers(`연결된 피어가없어요`);
   }
 
-  const addPeers = async () => {
+  const addPeer = async () => {
     const P = peer;
     if (P.length === 0) {
       //데이터없으면 리네임
       return alert(`peer내용을 넣어주세용`);
     }
     await axios
-      .post(`http://localhost:3002/addPeers`, {
-        peers: [`ws://localhost:${P}`],
+      .post(`http://localhost:3002/addPeer`, {
+        peer: [`ws://localhost:${P}`],
       })
-      .then((req) => alert(req.data));
+      .then((res) => alert(res.data));
   };
 
-  const toggleComment = (blockchain) => {
+  const toggleBlockInfo = (blockchain) => {
     console.log([blockchain.header.index]);
     setshownBlock((prevShownComments) => ({
       ...prevShownComments,
@@ -110,20 +116,29 @@ function Port2() {
       <Row>
         <Col span={24}>
           {" "}
-          <h1>3002포트 WS6002입니다.</h1>
+          <h1>3002포트 WS6003입니다.</h1>
         </Col>
       </Row>
       <br />
-      <Button style={{ marginTop: 5 }} type="dashed" onClick={address}>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={getAddress}>
         지갑확인
+      </Button>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={getBalance}>
+        잔액 조회
       </Button>
       {/* <Button style={{ marginLeft: 40, }} type="dashed" onClick={stop}>서버종료</Button> */}
 
       <div className="wallet_bublic_key_div">
         <div className="wallet_bublic_key_div-title">
-          <b>지갑 : </b>
+          <b>내 공개키 : </b>
         </div>
         <div className="wallet_bublic_key_div-content">{Wallet}</div>
+      </div>
+      <div className="wallet_bublic_key_div">
+        <div className="wallet_bublic_key_div-title">
+          <b>아름다운 잔액 : </b>
+        </div>
+        <div className="wallet_bublic_key_div-content">{Balance}</div>
       </div>
       <hr className="boundary_line"></hr>
       <Col span={20}>
@@ -136,7 +151,7 @@ function Port2() {
           value={peer}
         />
       </Col>
-      <Button style={{ marginTop: 5 }} type="dashed" onClick={addPeers}>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={addPeer}>
         피어연결
       </Button>
       <Button style={{ marginLeft: 40 }} type="dashed" onClick={getpeers}>
@@ -167,7 +182,7 @@ function Port2() {
           value={MoneyToAddress}
         />
       </Col>
-      <Button style={{ marginTop: 5 }} type="dashed" onClick={moneySend}>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={sendTransaction}>
         내 피같은 코인 숑숑 전송
       </Button>
       <hr className="boundary_line"></hr>
@@ -188,7 +203,7 @@ function Port2() {
       >
         블록만들기 얍~
       </Button>
-      <Button style={{ marginLeft: 30 }} type="dashed" onClick={connect}>
+      <Button style={{ marginLeft: 30 }} type="dashed" onClick={getBlockchain}>
         블록체인 목록 불러오기
       </Button>
       <Button
@@ -220,13 +235,13 @@ function Port2() {
           <ul key={a.header.index}>
             <div
               onClick={() => {
-                toggleComment(a);
+                toggleBlockInfo(a);
               }}
             >
               <Badge.Ribbon text="Block Chain">
                 <Card size="small" className="block_box">
                   <div>{a.header.index}번</div>
-                  <div>{a.body[0].id}</div>
+                  <div>{a.body}</div>
                 </Card>
               </Badge.Ribbon>
             </div>
@@ -286,20 +301,7 @@ function Port2() {
                         <div>
                           <div>body</div>
                         </div>
-
-                        {a.body.map((b) => {
-                          return (
-                            <div>
-                              <div>나는 트랜잭션 아이디 {b.id}</div>
-                              <div>
-                                나는 채굴 보상 받을 지갑 {b.txOuts[0].address}
-                              </div>
-                              <div>
-                                나는 채굴 보상 받을 금액 {b.txOuts[0].amount}
-                              </div>
-                            </div>
-                          );
-                        })}
+                        <div>{a.body}</div>
                       </li>
                     </Card>
                   </Col>

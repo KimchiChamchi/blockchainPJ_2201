@@ -102,14 +102,20 @@ const initHttpServer = (myHttpPort) => {
     }
   });
 
+  // 트랜잭션 만들기
   app.post("/sendTransaction", (req, res) => {
+    // console.log("왓니?");
+    // console.log(req.body);
     try {
+      // 전달받은 상대의 지갑 공개키와 코인수를 변수에 저장
       const address = req.body.address;
-      const amount = req.body.amount;
+      const amount = parseInt(req.body.amount);
 
+      // 해당 지갑주소나 코인수가 undefined면 오류
       if (address === undefined || amount === undefined) {
-        throw Error("invalid address or amount");
+        throw Error("보낼 주소나 코인이 문제가 있어요");
       }
+      //
       const resp = BC.sendTransaction(address, amount);
       res.send(resp);
     } catch (e) {

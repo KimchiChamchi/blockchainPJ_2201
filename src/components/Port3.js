@@ -7,6 +7,8 @@ function Port3() {
   const [peer, setPeer] = useState(""); //생성데이터
   const [peers, setPeers] = useState(" "); //생성데이터
   const [Wallet, setWallet] = useState([]); // 지갑 공개키
+  const [Money, setMoney] = useState(0);
+  const [MoneyToAddress, setMoneyToAddress] = useState("");
   const [Balance, setBalance] = useState([]); // 지갑 잔액
   const [chainBlocks, setChainBlocks] = useState([]); //db불러온거
   const reverse = [...chainBlocks].reverse(); //배열뒤집어주기
@@ -39,7 +41,7 @@ function Port3() {
       return alert(`데이터를 넣어주세용`);
     }
     await axios
-      .post(`http://localhost:3002/mineBlock`, { data: [data] })
+      .post(`http://localhost:3003/mineBlock`, { data: [data] })
       .then((res) => alert(res.data));
   };
 
@@ -61,6 +63,15 @@ function Port3() {
     await axios
       .get(`http://localhost:3003/balance`)
       .then((res) => setBalance(res.data.balance));
+  };
+  //
+  const sendTransaction = async () => {
+    await axios
+      .post(`http://localhost:3003/sendTransaction`, {
+        address: MoneyToAddress,
+        amount: Money,
+      })
+      .then((res) => console.log(res.data));
   };
   const stop = async () => {
     await axios
@@ -150,6 +161,30 @@ function Port3() {
         {" "}
         <b style={{ marginLeft: 10 }}> peers : </b> {peers}
       </p>
+      <hr className="boundary_line"></hr>
+      <Col span={3}>
+        <Input
+          placeholder="얼마면 돼?"
+          type="number"
+          onChange={(e) => {
+            setMoney(e.target.value);
+          }}
+          value={Money}
+        />
+      </Col>
+      <Col span={20}>
+        <Input
+          placeholder="어디다가?"
+          type="text"
+          onChange={(e) => {
+            setMoneyToAddress(e.target.value);
+          }}
+          value={MoneyToAddress}
+        />
+      </Col>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={sendTransaction}>
+        내 피같은 코인 숑숑 전송
+      </Button>
       <hr className="boundary_line"></hr>
       <Col span={20}>
         <Input

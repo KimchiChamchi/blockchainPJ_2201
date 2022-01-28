@@ -51,8 +51,10 @@ const getTransactionId = (transaction) => {
   return CryptoJS.SHA256(txInContent + txOutContent).toString();
 };
 
+// 거래 확인
 const validateTransaction = (transaction, aUnspentTxOuts) => {
   if (!isValidTransactionStructure(transaction)) {
+    console.log("여기니??????????????");
     return false;
   }
 
@@ -194,11 +196,13 @@ const findUnspentTxOut = (transactionId, index, aUnspentTxOuts) => {
     (uTxO) => uTxO.txOutId === transactionId && uTxO.txOutIndex === index
   );
 };
-
+// 코인베이스 트랜잭션 만들어주기
 const getCoinbaseTransaction = (address, blockIndex) => {
   const t = new Transaction();
   const txIn = new TxIn();
+  // 코인베이스는 시그니쳐(서명)없음
   txIn.signature = "";
+  // id 도 없음
   txIn.txOutId = "";
   txIn.txOutIndex = blockIndex;
 
@@ -298,6 +302,7 @@ const isValidTxInStructure = (txIn) => {
 };
 
 const isValidTxOutStructure = (txOut) => {
+  console.log(txOut);
   if (txOut == null) {
     console.log("txOut is null");
     return false;
