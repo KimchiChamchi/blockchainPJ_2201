@@ -7,7 +7,7 @@ function Port2() {
   const [peer, setPeer] = useState(""); //생성데이터
   const [peers, setPeers] = useState(" "); //생성데이터
   const [Wallet, setWallet] = useState([]); // 지갑 공개키
-  const [Money, setMoney] = useState("");
+  const [Money, setMoney] = useState(0);
   const [MoneyToAddress, setMoneyToAddress] = useState("");
   const [Balance, setBalance] = useState([]); // 지갑 잔액
   const [chainBlocks, setChainBlocks] = useState([]); //db불러온거
@@ -116,7 +116,7 @@ function Port2() {
       <Row>
         <Col span={24}>
           {" "}
-          <h1>3002포트 WS6003입니다.</h1>
+          <h1>3002포트 WS6002입니다.</h1>
         </Col>
       </Row>
       <br />

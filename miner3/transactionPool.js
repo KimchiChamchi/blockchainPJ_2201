@@ -50,9 +50,11 @@ const updateTransactionPool = (unspentTxOuts) => {
 
     // 그 트랜잭션의 인풋 개수만큼 반복
     for (const txIn of tx.txIns) {
+      console.log("나는 두번째 for문");
       // 그 인풋이 공용장부에
       if (!hasTxIn(txIn, unspentTxOuts)) {
         invalidTxs.push(tx);
+        console.log("나는 hasTxIn 통과");
         break;
       }
     }
@@ -62,6 +64,7 @@ const updateTransactionPool = (unspentTxOuts) => {
       "트랜잭션 풀에서 제외할 트랜잭션들을 제외합니다",
       JSON.stringify(invalidTxs)
     ); // 트랜잭션풀에서 제외할 트랜잭션들 제외하고 트랜잭션풀에 새로 담아주기
+    // _.without(a,b,c...) a배열에서 b,c..등을 제외한 새로운 배열을 반환
     transactionPool = _.without(transactionPool, ...invalidTxs);
   }
 };
