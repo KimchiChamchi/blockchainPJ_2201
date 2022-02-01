@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import { Space, Row, Col, Badge, Card, Input, Button } from "antd";
+import { Row, Col, Badge, Card, Input, Button } from "antd";
 
 function Port1() {
   const [블록데이터, set블록데이터] = useState(""); //생성데이터
   const [peer, setPeer] = useState(""); //생성데이터
   const [peers, setPeers] = useState(" "); //생성데이터
-  const [Wallet, setWallet] = useState([]);
+  const [Wallet, setWallet] = useState([]); // 지갑 공개키
+  const [Money, setMoney] = useState(0);
+  const [MoneyToAddress, setMoneyToAddress] = useState("");
+  const [Balance, setBalance] = useState([]); // 지갑 잔액
   const [chainBlocks, setChainBlocks] = useState([]); //db불러온거
   const reverse = [...chainBlocks].reverse(); //배열뒤집어주기
   const [shownBlock, setshownBlock] = useState({});
@@ -14,16 +17,15 @@ function Port1() {
   const [delay, setDelay] = useState(1000);
   const [isRunning, setIsRunning] = useState(false);
   const [ok, setOk] = useState(false);
-
   useInterval(
     () => {
-      const data = 블록데이터 || "1번채굴기입니다.";
+      const data = 블록데이터 || "3번채굴기입니다.";
       setIsRunning(false);
       console.log("데이터전송");
       axios
         .post(`http://localhost:3001/mineBlock`, { data: [data] })
-        .then((req) => {
-          console.log(req.data);
+        .then((res) => {
+          console.log(res.data);
           setIsRunning(true);
         });
 
@@ -31,6 +33,7 @@ function Port1() {
     },
     isRunning && ok ? delay : null
   );
+
   const bcMaker = async () => {
     const data = 블록데이터;
     if (data.length === 0) {
@@ -39,52 +42,68 @@ function Port1() {
     }
     await axios
       .post(`http://localhost:3001/mineBlock`, { data: [data] })
-      .then((req) => alert(req.data));
+      .then((res) => alert(res.data));
   };
 
-  const connect = async () => {
+  const getBlockchain = async () => {
     await axios
-      .get(`http://localhost:3001/Blocks`)
-      .then((req) => setChainBlocks(req.data));
+      .get(`http://localhost:3001/blocks`)
+      .then((res) => setChainBlocks(res.data));
   };
 
-  const address = async () => {
+  // 지갑 공개키 받아오기
+  const getAddress = async () => {
     await axios
       .get(`http://localhost:3001/address`)
-      .then((req) => setWallet(req.data.address));
-    console.log(Wallet);
+      .then((res) => setWallet(res.data.address));
+  };
+
+  // 지갑 잔액 조회
+  const getBalance = async () => {
+    await axios
+      .get(`http://localhost:3001/balance`)
+      .then((res) => setBalance(res.data.balance));
+  };
+  //
+  const sendTransaction = async () => {
+    await axios
+      .post(`http://localhost:3001/sendTransaction`, {
+        address: MoneyToAddress,
+        amount: Money,
+      })
+      .then((res) => console.log(res.data));
   };
   const stop = async () => {
     await axios
       .post(`http://localhost:3001/stop`)
-      .then((req) => alert(req.data));
+      .then((res) => alert(res.data));
   };
 
   const getpeers = async () => {
-    axios.get(`http://localhost:3001/peers`).then((req) => setPeers(req.data));
+    axios.get(`http://localhost:3001/peers`).then((res) => setPeers(res.data));
   };
   if (peers.length === 0) {
     return setPeers(`연결된 피어가없어요`);
   }
 
-  const addPeers = async () => {
+  const addPeer = async () => {
     const P = peer;
     if (P.length === 0) {
       //데이터없으면 리네임
       return alert(`peer내용을 넣어주세용`);
     }
     await axios
-      .post(`http://localhost:3001/addPeers`, {
-        peers: [`ws://localhost:${P}`],
+      .post(`http://localhost:3001/addPeer`, {
+        peer: [`ws://localhost:${P}`],
       })
-      .then((req) => alert(req.data));
+      .then((res) => alert(res.data));
   };
 
-  const toggleComment = (blockchain) => {
-    console.log([blockchain.header.index]);
+  const toggleBlockInfo = (blockchain) => {
+    console.log([blockchain.index]);
     setshownBlock((prevShownComments) => ({
       ...prevShownComments,
-      [blockchain.header.index]: !prevShownComments[blockchain.header.index],
+      [blockchain.index]: !prevShownComments[blockchain.index],
     }));
   };
 
@@ -97,20 +116,29 @@ function Port1() {
       <Row>
         <Col span={24}>
           {" "}
-          <h1>3001포트 WS6001입니다.</h1>
+          <h1>3003포트 WS6003입니다.</h1>
         </Col>
       </Row>
       <br />
-      <Button style={{ marginTop: 5 }} type="dashed" onClick={address}>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={getAddress}>
         지갑확인
+      </Button>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={getBalance}>
+        잔액 조회
       </Button>
       {/* <Button style={{ marginLeft: 40, }} type="dashed" onClick={stop}>서버종료</Button> */}
 
       <div className="wallet_bublic_key_div">
         <div className="wallet_bublic_key_div-title">
-          <b>지갑 : </b>
+          <b>내 공개키 : </b>
         </div>
         <div className="wallet_bublic_key_div-content">{Wallet}</div>
+      </div>
+      <div className="wallet_bublic_key_div">
+        <div className="wallet_bublic_key_div-title">
+          <b>아름다운 잔액 : </b>
+        </div>
+        <div className="wallet_bublic_key_div-content">{Balance}</div>
       </div>
       <hr className="boundary_line"></hr>
       <Col span={20}>
@@ -123,7 +151,7 @@ function Port1() {
           value={peer}
         />
       </Col>
-      <Button style={{ marginTop: 5 }} type="dashed" onClick={addPeers}>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={addPeer}>
         피어연결
       </Button>
       <Button style={{ marginLeft: 40 }} type="dashed" onClick={getpeers}>
@@ -133,6 +161,30 @@ function Port1() {
         {" "}
         <b style={{ marginLeft: 10 }}> peers : </b> {peers}
       </p>
+      <hr className="boundary_line"></hr>
+      <Col span={3}>
+        <Input
+          placeholder="얼마면 돼?"
+          type="number"
+          onChange={(e) => {
+            setMoney(e.target.value);
+          }}
+          value={Money}
+        />
+      </Col>
+      <Col span={20}>
+        <Input
+          placeholder="어디다가?"
+          type="text"
+          onChange={(e) => {
+            setMoneyToAddress(e.target.value);
+          }}
+          value={MoneyToAddress}
+        />
+      </Col>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={sendTransaction}>
+        내 피같은 코인 숑숑 전송
+      </Button>
       <hr className="boundary_line"></hr>
       <Col span={20}>
         <Input
@@ -151,7 +203,7 @@ function Port1() {
       >
         블록만들기 얍~
       </Button>
-      <Button style={{ marginLeft: 30 }} type="dashed" onClick={connect}>
+      <Button style={{ marginLeft: 30 }} type="dashed" onClick={getBlockchain}>
         블록체인 목록 불러오기
       </Button>
       <Button
@@ -178,23 +230,22 @@ function Port1() {
         <h1>자동 채굴양 {count}</h1>
         <input value={delay} onChange={handleDelayChange} />
       </div>
-      {reverse.map((a) => {
+      {reverse.map((blockData) => {
         return (
-          <ul key={a.header.index}>
+          <ul key={blockData.index}>
             <div
               onClick={() => {
-                toggleComment(a);
+                toggleBlockInfo(blockData);
               }}
             >
               <Badge.Ribbon text="Block Chain">
                 <Card size="small" className="block_box">
-                  <div>{a.header.index}번</div>
-                  <div>{a.body}</div>
+                  <div>{blockData.index}번 블록</div>
                 </Card>
               </Badge.Ribbon>
             </div>
 
-            {shownBlock[a.header.index] ? (
+            {shownBlock[blockData.index] ? (
               <Col span={23}>
                 <Row justify="end">
                   <Col span={23}>
@@ -207,50 +258,98 @@ function Port1() {
                         <div>
                           <div>index</div>
                         </div>
-                        <div>{a.header.index}</div>
+                        <div>{blockData.index}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
                           <div>previousHash</div>
                         </div>
-                        <div>{a.header.previousHash}</div>
+                        <div>{blockData.previousHash}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
                           <div>timestamp</div>
                         </div>
-                        <div>{a.header.timestamp}</div>
+                        <div>{blockData.timestamp}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
-                          <div>merkleRoot</div>
+                          <div>hash</div>
                         </div>
-                        <div>{a.header.merkleRoot}</div>
+                        <div>{blockData.hash}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
                           <div>difficulty</div>
                         </div>
-                        <div>{a.header.difficulty}</div>
+                        <div>{blockData.difficulty}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
                           <div>nonce</div>
                         </div>
-                        <div>{a.header.nonce}</div>
+                        <div>{blockData.nonce}</div>
                       </li>
                       <hr className="boundary_line"></hr>
-                      <li>
-                        <div>
-                          <div>body</div>
-                        </div>
-                        <div>{a.body}</div>
-                      </li>
+                      <div className="Transaction-title">Transactions</div>
+                      {blockData.data.map((transaction) => {
+                        return (
+                          <div
+                            className="Transaction-content"
+                            key={transaction.id}
+                          >
+                            <div className="Transaction-content_box">
+                              <div className="Transaction-content_info_id">
+                                <div>Id</div>
+                                <div>{transaction.id}</div>
+                              </div>
+                              {transaction.txIns.map((txIn) => {
+                                return (
+                                  <div
+                                    className="Transaction-content_info"
+                                    key={txIn.signature}
+                                  >
+                                    <div className="Transaction-content_info_txIn">
+                                      <div>signature</div>
+                                      <div>{txIn.signature}</div>
+                                    </div>
+                                    <div className="Transaction-content_info_txIn">
+                                      <div>txOutId</div>
+                                      <div>{txIn.txOutId}</div>
+                                    </div>
+                                    <div className="Transaction-content_info_txIn">
+                                      <div>txOutIndex</div>
+                                      <div>{txIn.txOutIndex}</div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              {transaction.txOuts.map((txOut, index) => {
+                                return (
+                                  <div
+                                    className="Transaction-content_info"
+                                    key={index}
+                                  >
+                                    <div className="Transaction-content_info_txOut">
+                                      <div>address</div>
+                                      <div>{txOut.address}</div>
+                                    </div>
+                                    <div className="Transaction-content_info_txOut">
+                                      <div>amount</div>
+                                      <div>{txOut.amount}</div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </Card>
                   </Col>
                 </Row>

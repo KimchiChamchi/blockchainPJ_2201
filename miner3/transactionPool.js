@@ -19,13 +19,14 @@ const addToTransactionPool = (tx, unspentTxOuts) => {
   }
 
   if (!isValidTxForPool(tx, transactionPool)) {
-    throw Error("트랜잭션 풀에 잘못된 트랜잭션이 들어왔어요(isValidTxForPool)");
+    throw Error(
+      "트랜잭션 풀에 이미 있는 트랜잭션이 들어왔어요(isValidTxForPool)"
+    );
   }
-  console.log("트랜잭션 풀에 새로운 트랜잭션을 추가합니다");
   transactionPool.push(tx);
-  console.log(transactionPool);
-  console.log(1111111111111111);
+  console.log("트랜잭션 풀에 새로운 트랜잭션을 추가했습니다");
 };
+
 /*******************************************************************해석실패 */
 // 새로 갱신될 공용장부에 기존 트랜잭션풀에 있는 인풋이 있는지 검사
 const hasTxIn = (txIn, unspentTxOuts) => {
@@ -61,9 +62,9 @@ const updateTransactionPool = (unspentTxOuts) => {
   } // 제외할 트랜잭션목록이 하나라도 있으면
   if (invalidTxs.length > 0) {
     console.log(
-      "트랜잭션 풀에서 제외할 트랜잭션들을 제외합니다",
-      JSON.stringify(invalidTxs)
-    ); // 트랜잭션풀에서 제외할 트랜잭션들 제외하고 트랜잭션풀에 새로 담아주기
+      "트랜잭션 풀에서 제외할 트랜잭션들을 제외합니다"
+      // JSON.stringify(invalidTxs)
+    ); // 트랜잭션풀에서 제외할 트랜잭션들은 제외하고 트랜잭션풀에 새로 담아주기
     // _.without(a,b,c...) a배열에서 b,c..등을 제외한 새로운 배열을 반환
     transactionPool = _.without(transactionPool, ...invalidTxs);
   }
@@ -98,7 +99,6 @@ const isValidTxForPool = (tx, aTtransactionPool) => {
   for (const txIn of tx.txIns) {
     // 전달받은 트랜잭션의 인풋이 트랜잭션풀에 있는 인풋과 같으면
     if (containsTxIn(txPoolIns, txIn)) {
-      console.log("이건 ", txIn, " 이미 트랜잭션 풀에 있는 트랜잭션이네요");
       return false;
     }
   }

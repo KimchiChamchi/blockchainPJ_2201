@@ -51,13 +51,13 @@ const getTransactionId = (transaction) => {
   return CryptoJS.SHA256(txInContent + txOutContent).toString();
 };
 
-// 거래 확인
+// 트랜잭션 확인
 const validateTransaction = (transaction, aUnspentTxOuts) => {
+  // 트랜잭션 구조 검증하고
   if (!isValidTransactionStructure(transaction)) {
-    console.log("여기니??????????????");
     return false;
   }
-
+  //
   if (getTransactionId(transaction) !== transaction.id) {
     console.log("invalid tx id: " + transaction.id);
     return false;
@@ -89,6 +89,7 @@ const validateTransaction = (transaction, aUnspentTxOuts) => {
   return true;
 };
 
+// 블록
 const validateBlockTransactions = (
   aTransactions,
   aUnspentTxOuts,
@@ -103,7 +104,7 @@ const validateBlockTransactions = (
   // check for duplicate txIns. Each txIn can be included only once
   const txIns = _(aTransactions)
     .map((tx) => tx.txIns)
-    .flatten()
+    .flatten() // 배열 안의 배열을 풀어주는 녀석 -> [[a],[b],[c]] -> [a,b,c]
     .value();
 
   if (hasDuplicates(txIns)) {
@@ -283,64 +284,66 @@ const getPublicKey = (aPrivateKey) => {
   return EC.keyFromPrivate(aPrivateKey, "hex").getPublic().encode("hex");
 };
 
+// 트랜잭션의 인풋 구조 검증
 const isValidTxInStructure = (txIn) => {
   if (txIn == null) {
-    console.log("txIn is null");
+    console.log("(검증실패) 트랜잭션의 인풋이 null 입니다");
     return false;
   } else if (typeof txIn.signature !== "string") {
-    console.log("invalid signature type in txIn");
+    console.log("(검증실패) 트랜잭션의 인풋의 서명이 string이 아니네요");
     return false;
   } else if (typeof txIn.txOutId !== "string") {
-    console.log("invalid txOutId type in txIn");
+    console.log("(검증실패) 트랜잭션의 인풋의 txOutId가 string이 아니네요");
     return false;
   } else if (typeof txIn.txOutIndex !== "number") {
-    console.log("invalid txOutIndex type in txIn");
+    console.log("(검증실패) 트랜잭션의 인풋의 txOutIndex가 number가 아니네요");
     return false;
   } else {
     return true;
   }
 };
 
+// 트랜잭션의 아웃풋 구조 검증
 const isValidTxOutStructure = (txOut) => {
-  console.log(txOut);
   if (txOut == null) {
-    console.log("txOut is null");
+    console.log("(검증실패) 트랜잭션의 아웃풋이 null 입니다");
     return false;
   } else if (typeof txOut.address !== "string") {
-    console.log("invalid address type in txOut");
+    console.log("(검증실패) 트랜잭션의 아웃풋의 주소가 string이 아니네요");
     return false;
   } else if (!isValidAddress(txOut.address)) {
-    console.log("invalid TxOut address");
+    console.log("(검증실패) 트랜잭션의 아웃풋의 주소가 잘못됐어요");
     return false;
   } else if (typeof txOut.amount !== "number") {
-    console.log("invalid amount type in txOut");
+    console.log("(검증실패) 트랜잭션의 아웃풋의 코인이 number가 아니에요");
     return false;
   } else {
     return true;
   }
 };
 
+// 트랜잭션 구조 검증
 const isValidTransactionStructure = (transaction) => {
   if (typeof transaction.id !== "string") {
-    console.log("transactionId missing");
+    console.log("(검증실패) 트랜잭션 id가 문자열이 아닙니다");
     return false;
   }
   if (!(transaction.txIns instanceof Array)) {
-    console.log("invalid txIns type in transaction");
+    console.log("(검증실패) 트랜잭션의 txIns가 배열이 아닙니다");
     return false;
   }
   if (
+    // 트랜잭션의 txIns에 들어있는 인풋들 구조 검사
     !transaction.txIns.map(isValidTxInStructure).reduce((a, b) => a && b, true)
   ) {
     return false;
   }
-
   if (!(transaction.txOuts instanceof Array)) {
-    console.log("invalid txIns type in transaction");
+    console.log("(검증실패) 트랜잭션의 txOuts가 배열이 아닙니다");
     return false;
   }
-
   if (
+    // 트랜잭션의 txOuts에 들어있는 아웃풋들 구조 검사
     !transaction.txOuts
       .map(isValidTxOutStructure)
       .reduce((a, b) => a && b, true)
@@ -350,17 +353,17 @@ const isValidTransactionStructure = (transaction) => {
   return true;
 };
 
-// valid address is a valid ecdsa public key in the 04 + X-coordinate + Y-coordinate format
+// 지갑 공개키 검증
 const isValidAddress = (address) => {
+  // 공개키가 130자가 아니면
   if (address.length !== 130) {
-    console.log(address);
-    console.log("invalid public key length");
+    console.log("공개키가 130자가 아니네요");
     return false;
   } else if (address.match("^[a-fA-F0-9]+$") === null) {
-    console.log("public key must contain only hex characters");
+    console.log("공개키가 16진수가 아니네요");
     return false;
   } else if (!address.startsWith("04")) {
-    console.log("public key must start with 04");
+    console.log("공개키가 '04'로 시작하지 않네요");
     return false;
   }
   return true;

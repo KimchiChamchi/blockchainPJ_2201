@@ -115,8 +115,10 @@ const initHttpServer = (myHttpPort) => {
       if (address === undefined || amount === undefined) {
         throw Error("보낼 주소나 코인이 문제가 있어요");
       }
-      //
+      // address와 amount를 토대로 트랜잭션을 만들고 broadCast 하기
       const resp = BC.sendTransaction(address, amount);
+      console.log("나는 utxo");
+      console.log(BC.getUnspentTxOuts());
       res.send(resp);
     } catch (e) {
       console.log(e.message);

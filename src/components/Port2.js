@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import { Space, Row, Col, Badge, Card, Input, Button } from "antd";
+import { Row, Col, Badge, Card, Input, Button } from "antd";
 
 function Port2() {
   const [블록데이터, set블록데이터] = useState(""); //생성데이터
@@ -100,10 +100,10 @@ function Port2() {
   };
 
   const toggleBlockInfo = (blockchain) => {
-    console.log([blockchain.header.index]);
+    console.log([blockchain.index]);
     setshownBlock((prevShownComments) => ({
       ...prevShownComments,
-      [blockchain.header.index]: !prevShownComments[blockchain.header.index],
+      [blockchain.index]: !prevShownComments[blockchain.index],
     }));
   };
 
@@ -116,7 +116,7 @@ function Port2() {
       <Row>
         <Col span={24}>
           {" "}
-          <h1>3002포트 WS6002입니다.</h1>
+          <h1>3003포트 WS6003입니다.</h1>
         </Col>
       </Row>
       <br />
@@ -230,23 +230,22 @@ function Port2() {
         <h1>자동 채굴양 {count}</h1>
         <input value={delay} onChange={handleDelayChange} />
       </div>
-      {reverse.map((a) => {
+      {reverse.map((blockData) => {
         return (
-          <ul key={a.header.index}>
+          <ul key={blockData.index}>
             <div
               onClick={() => {
-                toggleBlockInfo(a);
+                toggleBlockInfo(blockData);
               }}
             >
               <Badge.Ribbon text="Block Chain">
                 <Card size="small" className="block_box">
-                  <div>{a.header.index}번</div>
-                  <div>{a.body}</div>
+                  <div>{blockData.index}번 블록</div>
                 </Card>
               </Badge.Ribbon>
             </div>
 
-            {shownBlock[a.header.index] ? (
+            {shownBlock[blockData.index] ? (
               <Col span={23}>
                 <Row justify="end">
                   <Col span={23}>
@@ -259,50 +258,98 @@ function Port2() {
                         <div>
                           <div>index</div>
                         </div>
-                        <div>{a.header.index}</div>
+                        <div>{blockData.index}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
                           <div>previousHash</div>
                         </div>
-                        <div>{a.header.previousHash}</div>
+                        <div>{blockData.previousHash}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
                           <div>timestamp</div>
                         </div>
-                        <div>{a.header.timestamp}</div>
+                        <div>{blockData.timestamp}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
-                          <div>merkleRoot</div>
+                          <div>hash</div>
                         </div>
-                        <div>{a.header.merkleRoot}</div>
+                        <div>{blockData.hash}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
                           <div>difficulty</div>
                         </div>
-                        <div>{a.header.difficulty}</div>
+                        <div>{blockData.difficulty}</div>
                       </li>
                       <hr className="boundary_line"></hr>
                       <li>
                         <div>
                           <div>nonce</div>
                         </div>
-                        <div>{a.header.nonce}</div>
+                        <div>{blockData.nonce}</div>
                       </li>
                       <hr className="boundary_line"></hr>
-                      <li>
-                        <div>
-                          <div>body</div>
-                        </div>
-                        <div>{a.body}</div>
-                      </li>
+                      <div className="Transaction-title">Transactions</div>
+                      {blockData.data.map((transaction) => {
+                        return (
+                          <div
+                            className="Transaction-content"
+                            key={transaction.id}
+                          >
+                            <div className="Transaction-content_box">
+                              <div className="Transaction-content_info_id">
+                                <div>Id</div>
+                                <div>{transaction.id}</div>
+                              </div>
+                              {transaction.txIns.map((txIn) => {
+                                return (
+                                  <div
+                                    className="Transaction-content_info"
+                                    key={txIn.signature}
+                                  >
+                                    <div className="Transaction-content_info_txIn">
+                                      <div>signature</div>
+                                      <div>{txIn.signature}</div>
+                                    </div>
+                                    <div className="Transaction-content_info_txIn">
+                                      <div>txOutId</div>
+                                      <div>{txIn.txOutId}</div>
+                                    </div>
+                                    <div className="Transaction-content_info_txIn">
+                                      <div>txOutIndex</div>
+                                      <div>{txIn.txOutIndex}</div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              {transaction.txOuts.map((txOut, index) => {
+                                return (
+                                  <div
+                                    className="Transaction-content_info"
+                                    key={index}
+                                  >
+                                    <div className="Transaction-content_info_txOut">
+                                      <div>address</div>
+                                      <div>{txOut.address}</div>
+                                    </div>
+                                    <div className="Transaction-content_info_txOut">
+                                      <div>amount</div>
+                                      <div>{txOut.amount}</div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </Card>
                   </Col>
                 </Row>

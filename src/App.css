@@ -422,11 +422,13 @@ a:hover {
 .block_box > div:nth-child(1) > div:nth-child(2) {
   padding-left: 30px;
 }
+.block_box-block_info {
+  word-break: break-all;
+}
 .block_box-block_info li {
   display: flex;
   width: 100%;
   margin: 4px 0px;
-  word-break: break-all;
 }
 .block_box-block_info li b {
   margin: auto 0px;
@@ -452,6 +454,31 @@ a:hover {
   background-color: #f0f2f5;
   height: 1px;
   border: 0;
+}
+.Transaction-title {
+  padding-left: 30px;
+}
+.Transaction-content_box {
+  border: 1px solid #f0f2f5;
+  margin-bottom: 5px;
+  display: flex;
+  flex-direction: column;
+}
+.Transaction-content_info {
+  display: flex;
+  flex-direction: column;
+}
+.Transaction-content_info_id,
+.Transaction-content_info_txIn,
+.Transaction-content_info_txOut {
+  display: flex;
+}
+.Transaction-content_info_id > :nth-child(1),
+.Transaction-content_info_txIn > :nth-child(1),
+.Transaction-content_info_txOut > :nth-child(1) {
+  min-width: 100px;
+  text-align: center;
+  margin: auto 0;
 }
 .auto_mine_box input {
   width: 5rem;
