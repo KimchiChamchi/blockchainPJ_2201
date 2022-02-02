@@ -17,6 +17,11 @@ function Port3() {
   const [delay, setDelay] = useState(1000);
   const [isRunning, setIsRunning] = useState(false);
   const [ok, setOk] = useState(false);
+  const [transactionPool, setTransactionPool] = useState("");
+  useInterval(() => {
+    getTransactionPool();
+  }, 3000);
+
   useInterval(
     () => {
       const data = 블록데이터 || "3번채굴기입니다.";
@@ -73,6 +78,13 @@ function Port3() {
       })
       .then((res) => console.log(res.data));
   };
+  // 트랜잭션풀 불러오기
+  const getTransactionPool = async () => {
+    await axios
+      .get(`http://localhost:3003/transactionPool`)
+      .then((res) => setTransactionPool(res.data));
+  };
+  // 서버 멈춰
   const stop = async () => {
     await axios
       .post(`http://localhost:3003/stop`)
@@ -99,14 +111,15 @@ function Port3() {
       .then((res) => alert(res.data));
   };
 
-  const toggleBlockInfo = (blockchain) => {
-    console.log([blockchain.index]);
-    setshownBlock((prevShownComments) => ({
-      ...prevShownComments,
-      [blockchain.index]: !prevShownComments[blockchain.index],
+  // 블록 상세정보 펼치기, 접기
+  const toggleBlockInfo = (block) => {
+    setshownBlock((shownBlockInfo) => ({
+      ...shownBlockInfo,
+      [block.index]: !shownBlockInfo[block.index],
     }));
   };
 
+  // 자동채굴 채굴요청시간 조정
   function handleDelayChange(e) {
     setDelay(Number(e.target.value));
   }
@@ -115,8 +128,7 @@ function Port3() {
     <div>
       <Row>
         <Col span={24}>
-          {" "}
-          <h1>3003포트 WS6003입니다.</h1>
+          <h1>3003포트</h1>
         </Col>
       </Row>
       <br />
@@ -127,7 +139,6 @@ function Port3() {
         잔액 조회
       </Button>
       {/* <Button style={{ marginLeft: 40, }} type="dashed" onClick={stop}>서버종료</Button> */}
-
       <div className="wallet_bublic_key_div">
         <div className="wallet_bublic_key_div-title">
           <b>내 공개키 : </b>
@@ -185,6 +196,12 @@ function Port3() {
       <Button style={{ marginTop: 5 }} type="dashed" onClick={sendTransaction}>
         내 피같은 코인 숑숑 전송
       </Button>
+      <hr className="boundary_line"></hr>
+      Pool
+      {/* {transactionPool} */}
+      {transactionPool.map((txPool) => {
+        return txPool.id;
+      })}
       <hr className="boundary_line"></hr>
       <Col span={20}>
         <Input

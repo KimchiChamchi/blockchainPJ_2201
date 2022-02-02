@@ -22,11 +22,13 @@ const initHttpServer = (myHttpPort) => {
     }
   });
 
+  // 블록체인 정보
   app.get("/blocks", (req, res) => {
     console.log(BC.getBlockchain());
     res.send(BC.getBlockchain());
   });
 
+  //
   app.get("/block/:hash", (req, res) => {
     const block = _.find(BC.getBlockchain(), { hash: req.params.hash });
     res.send(block);
@@ -48,14 +50,17 @@ const initHttpServer = (myHttpPort) => {
     res.send({ unspentTxOuts: unspentTxOuts });
   });
 
+  // UTxOs(공용장부) 불러오기
   app.get("/unspentTransactionOutputs", (req, res) => {
     res.send(BC.getUnspentTxOuts());
   });
 
+  // UTxOs(공용장부)에서 내것만 불러오기
   app.get("/myUnspentTransactionOutputs", (req, res) => {
     res.send(BC.getMyUnspentTransactionOutputs());
   });
 
+  // 임의로 트랜잭션 넣은 블록 채굴하기 (안씀)
   app.post("/mineRawBlock", (req, res) => {
     if (req.body.data == null) {
       res.send("data parameter is missing");
@@ -69,10 +74,11 @@ const initHttpServer = (myHttpPort) => {
     }
   });
 
+  // 블록 채굴하기
   app.post("/mineBlock", (req, res) => {
     const newBlock = BC.generateNextBlock();
     if (newBlock === null) {
-      res.status(400).send("could not generate block");
+      res.status(400).send("채굴이 안돼요");
     } else {
       res.send(newBlock);
     }
@@ -90,6 +96,7 @@ const initHttpServer = (myHttpPort) => {
     res.send({ address: address });
   });
 
+  // 채굴할때 코인베이스랑 풀 사이에 트랜잭션 하나 끼워넣고 채굴하기 (안씀)
   app.post("/mineTransaction", (req, res) => {
     const address = req.body.address;
     const amount = req.body.amount;
@@ -104,8 +111,6 @@ const initHttpServer = (myHttpPort) => {
 
   // 트랜잭션 만들기
   app.post("/sendTransaction", (req, res) => {
-    // console.log("왓니?");
-    // console.log(req.body);
     try {
       // 전달받은 상대의 지갑 공개키와 코인수를 변수에 저장
       const address = req.body.address;
@@ -117,8 +122,6 @@ const initHttpServer = (myHttpPort) => {
       }
       // address와 amount를 토대로 트랜잭션을 만들고 broadCast 하기
       const resp = BC.sendTransaction(address, amount);
-      console.log("나는 utxo");
-      console.log(BC.getUnspentTxOuts());
       res.send(resp);
     } catch (e) {
       console.log(e.message);
@@ -126,10 +129,12 @@ const initHttpServer = (myHttpPort) => {
     }
   });
 
+  // 트랜잭션풀 가져오기
   app.get("/transactionPool", (req, res) => {
     res.send(TP.getTransactionPool());
   });
 
+  // 연결된 소켓목록 가져오기
   app.get("/peers", (req, res) => {
     res.send(
       P2P.getSockets().map(
@@ -144,6 +149,7 @@ const initHttpServer = (myHttpPort) => {
     res.send();
   });
 
+  // 서버 멈춰
   app.post("/stop", (req, res) => {
     res.send({ msg: "stopping server" });
     process.exit();

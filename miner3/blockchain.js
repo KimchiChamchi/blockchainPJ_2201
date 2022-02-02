@@ -40,6 +40,7 @@ const WALLET = require("./wallet");
 //     this.transactions = [transactions];
 //   }
 // }
+
 // 블록 구조 정의
 class Block {
   constructor(index, hash, previousHash, timestamp, data, difficulty, nonce) {
@@ -95,6 +96,7 @@ const setUnspentTxOuts = (newUnspentTxOut) => {
   unspentTxOuts = newUnspentTxOut;
 };
 
+// 내 마지막 블록 가져오기
 const getLatestBlock = () => blockchain[blockchain.length - 1];
 
 // 블록생성 간격 10초
@@ -161,6 +163,7 @@ const generateRawNextBlock = (blockData) => {
 };
 
 // 내 지갑에 해당하는 미사용 트랜잭션 찾아서 불러오기
+// 공용장부에서 내 공개키와 일치하는 정보만 반환
 const getMyUnspentTransactionOutputs = () => {
   return WALLET.findUnspentTxOuts(
     WALLET.getPublicFromWallet(),
@@ -182,7 +185,8 @@ const generateNextBlock = () => {
   return generateRawNextBlock(blockData);
 };
 
-//
+// 블록 생성하면서 내 트랜잭션도 끼워넣기
+// (코인베이스트랜잭션과 풀 사이에 채굴자가 임의로 만든 트랜잭션 끼워넣는것)
 const generatenextBlockWithTransaction = (receiverAddress, amount) => {
   if (!TX.isValidAddress(receiverAddress)) {
     throw Error("주소가 잘못되었어요");
@@ -206,10 +210,11 @@ const generatenextBlockWithTransaction = (receiverAddress, amount) => {
   return generateRawNextBlock(blockData);
 };
 
-// 블록 찾기
+// 블록 찾기(채굴)
 const findBlock = (index, previousHash, timestamp, data, difficulty) => {
-  let nonce = 0;
+  let nonce = 0; // 해시를 계산해서 난이도와 알맞는 해시가 될때까지
   while (true) {
+    // nonce를 증가시키며 반복할것임
     const hash = calculateHash(
       index,
       previousHash,
@@ -217,7 +222,7 @@ const findBlock = (index, previousHash, timestamp, data, difficulty) => {
       data,
       difficulty,
       nonce
-    );
+    ); // 난이도와 부합하는 해시가 나왔으면 블록으로 반환
     if (hashMatchesDifficulty(hash, difficulty)) {
       return new Block(
         index,
@@ -257,6 +262,7 @@ const sendTransaction = (address, amount) => {
   return tx;
 };
 
+// 받은 블록 해시 계산하기
 const calculateHashForBlock = (block) =>
   calculateHash(
     block.index,
@@ -267,6 +273,7 @@ const calculateHashForBlock = (block) =>
     block.nonce
   );
 
+// 해시 계산
 const calculateHash = (
   index,
   previousHash,
@@ -279,6 +286,7 @@ const calculateHash = (
     index + previousHash + timestamp + data + difficulty + nonce
   ).toString();
 
+// 블록구조 검사
 const isValidBlockStructure = (block) => {
   return (
     typeof block.index === "number" &&
@@ -309,6 +317,7 @@ const isValidNewBlock = (newBlock, previousBlock) => {
     console.log("블록검증실패: 타임스탬프가 잘못됐어요");
     return false;
   } else if (!hasValidHash(newBlock)) {
+    console.log("블록검증실패: 해시가 잘못됐어요");
     return false;
   }
   return true;
@@ -334,29 +343,27 @@ const isValidTimestamp = (newBlock, previousBlock) => {
   // 새블록이 내 시간보다 60초까진 일찍 나와도 네트워크시간 오차로 허용한다는 의미일듯
 };
 
+// 해시 검증하기
 const hasValidHash = (block) => {
+  // 블록의 해시와 블록의 데이터들로 계산해본 해시가 다르면
   if (!hashMatchesBlockContent(block)) {
-    console.log("invalid hash, got:" + block.hash);
+    console.log("블록에 입력된 해시가 실제 해시와 달라요");
     return false;
   }
-
+  // 해시가 난이도에 맞게 0이 들어가지 않은 경우
   if (!hashMatchesDifficulty(block.hash, block.difficulty)) {
-    console.log(
-      "block difficulty not satisfied. Expected: " +
-        block.difficulty +
-        "got: " +
-        block.hash
-    );
+    console.log("해시가 난이도와 매칭이 안되네요");
   }
   return true;
 };
 
-// 받은 블록의 해시
+// 블록에 들어있는 해시랑 계산해본 해시랑 일치하는지 검사
 const hashMatchesBlockContent = (block) => {
   const blockHash = calculateHashForBlock(block);
   return blockHash === block.hash;
 };
 
+// 찾은 해시값이 난이도에 맞는 해시값인지 검사
 // 찾은 해시값을 2진수로 변환해 난이도만큼 앞에 0으로 채워졌는지 대조하기
 const hashMatchesDifficulty = (hash, difficulty) => {
   const hashInBinary = hexToBinary(hash);
@@ -364,9 +371,6 @@ const hashMatchesDifficulty = (hash, difficulty) => {
   return hashInBinary.startsWith(requiredPrefix);
 };
 
-/*
-    Checks if the given blockchain is valid. Return the unspent txOuts if the chain is valid
- */
 // 전달받은 블록체인과 그 안의 트랜잭션들을 검증하고 그로부터 만들어낸 공용장부 반환받기
 const isValidChain = (blockchainToValidate) => {
   // 내 제네시스 블록과 전달받은 블록체인의 제네시스 블록이 같으면 true
@@ -377,10 +381,7 @@ const isValidChain = (blockchainToValidate) => {
   if (!isValidGenesis(blockchainToValidate[0])) {
     return null;
   }
-  /*
-    Validate each block in the chain. The block is valid if the block structure is valid
-      and the transaction are valid
-     */
+
   // 새로 만들 공용장부
   let aUnspentTxOuts = [];
 
@@ -408,6 +409,7 @@ const isValidChain = (blockchainToValidate) => {
   }
 
   // 전달받은 블록체인으로 만든 공용장부 반환
+  // (체인교체할 때 공용장부도 이 새로만든 공용장부로 바꿀것임)
   return aUnspentTxOuts;
 };
 
@@ -415,9 +417,9 @@ const isValidChain = (blockchainToValidate) => {
 const addBlockToChain = (newBlock) => {
   // 새 블록 검증해서 정상이면
   if (isValidNewBlock(newBlock, getLatestBlock())) {
-    // 새 블록에 들어갈 트랜잭션들 검증하고(processTransactions)
-    // 기존 미사용트랜잭션아웃풋목록(UTxOs/공용장부)에서 일어난 거래들
-    // 계산 뚝딱 때려서 공용장부 이용 고객들 잔고 갱신해서 retVal변수에 담기
+    // (processTransactions)새 블록에 들어갈 트랜잭션들 검증하고
+    // 기존 미사용트랜잭션아웃풋목록(UTxOs/공용장부)에서 새 블록에 담긴 거래들과
+    // 현재 공용장부 정산해서 갱신한 공용장부 retVal변수에 담기
     const retVal = TX.processTransactions(
       newBlock.data,
       getUnspentTxOuts(),
@@ -445,8 +447,10 @@ const replaceChain = (newBlocks) => {
   // 전달받은 블록체인, 그안의 트랜잭션들 검증 후
   // 그것들로 만든 공용장부를 aUnspentTxOuts변수에 저장
   const aUnspentTxOuts = isValidChain(newBlocks);
+
   // 공용장부 상태가 null 이 아닌지 확인용 변수validChain (true/false)
   const validChain = aUnspentTxOuts !== null;
+
   // 공용장부가 비어있지 않고 && 전달받은 블록체인의 누적난이도가
   // 내가 가진 블록체인의 누적난이도보다 높으면
   if (

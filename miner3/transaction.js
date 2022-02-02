@@ -142,32 +142,37 @@ const hasDuplicates = (txIns) => {
     .includes(true);
 };
 
-// 코인베이스 트랜잭션 검사
+// 코인베이스 트랜잭션 검사 (processTransactions 작동할 때 사용됨)
+//                        (초기, 블록추가될 때, 체인교체될 때)
 const validateCoinbaseTx = (transaction, blockIndex) => {
+  // 코인베이스 트랜잭션이 null인 경우
   if (transaction == null) {
+    console.log("(검증실패) 코인베이스 트랜잭션 자리가 비었네요(null)");
+    return false;
+  } // 블록에 기록된 코베트잭id가 코베트잭가지고 계산해본 코베트잭id와 다른경우
+  if (getTransactionId(transaction) !== transaction.id) {
     console.log(
-      "the first transaction in the block must be coinbase transaction"
+      "(검증실패) 코인베이스 트랜잭션의 id가 계산해보니 일치하지 않아요"
     );
     return false;
-  }
-  if (getTransactionId(transaction) !== transaction.id) {
-    console.log("invalid coinbase tx id: " + transaction.id);
-    return false;
-  }
+  } // 코베트잭의 인풋이 1개가 아닌경우
   if (transaction.txIns.length !== 1) {
-    console.log("one txIn must be specified in the coinbase transaction");
+    console.log("(검증실패) 코인베이스 트랜잭션의 인풋이 1개가 아니에요");
     return;
-  }
+  } // 코베트잭의 인풋의 txOutIndex와 코베트잭이 들어있는 블록의 인덱스가 같지 않은 경우
   if (transaction.txIns[0].txOutIndex !== blockIndex) {
-    console.log("the txIn signature in coinbase tx must be the block height");
+    console.log(
+      "(검증실패) 코인베이스 tx의 txOutIndex와 블록의 높이가 다르네요"
+    );
     return false;
-  }
+  } // 코베트잭의 아웃풋이 1개가 아닌경우
+  // (코베트잭에는 채굴자에게 보상주는 아웃풋 하나만 있어야함)
   if (transaction.txOuts.length !== 1) {
-    console.log("invalid number of txOuts in coinbase transaction");
+    console.log("(검증실패) 코인베이스 tx의 txOuts가 1개가 아니네요");
     return false;
-  }
+  } // 코베트잭의 채굴자에게 보낼 보상금액이 설계된 금액(50)과 다른경우
   if (transaction.txOuts[0].amount !== COINBASE_AMOUNT) {
-    console.log("invalid coinbase amount in coinbase transaction");
+    console.log("(검증실패) 채굴보상금액이 설정된 금액과 달라요");
     return false;
   }
   return true;
@@ -219,6 +224,7 @@ const getCoinbaseTransaction = (address, blockIndex) => {
 
   t.txIns = [txIn];
   t.txOuts = [new TxOut(address, COINBASE_AMOUNT)];
+  // 위 정보들로 코인베이스 트랜잭션의 id 만들어주기
   t.id = getTransactionId(t);
   return t;
 };
@@ -293,8 +299,8 @@ const updateUnspentTxOuts = (aTransactions, aUnspentTxOuts) => {
 // 공용장부 갱신하기 (공용장부에서 거래내용(aTransactions) 정산해서)
 //                  (갱신한 공용장부 반환)
 const processTransactions = (aTransactions, aUnspentTxOuts, blockIndex) => {
+  // 블록의 트랜잭션들 검사하기
   if (!validateBlockTransactions(aTransactions, aUnspentTxOuts, blockIndex)) {
-    console.log("");
     return null;
   }
   // 트랜잭션들과 공용장부에
