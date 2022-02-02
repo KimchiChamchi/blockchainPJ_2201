@@ -6,6 +6,7 @@ const EC = new ecdsa.ec("secp256k1");
 
 const COINBASE_AMOUNT = 50;
 
+// UTxOs(공용장부)에 들어갈 미사용 트랜잭션 아웃풋 클래스 정의
 class UnspentTxOut {
   constructor(txOutId, txOutIndex, address, amount) {
     this.txOutId = txOutId;
@@ -15,6 +16,7 @@ class UnspentTxOut {
   }
 }
 
+// 트랜잭션 인풋 클래스 정의
 class TxIn {
   constructor(txOutId, txOutIndex, signature) {
     this.txOutId = txOutId;
@@ -23,6 +25,7 @@ class TxIn {
   }
 }
 
+// 트랜잭션 아웃풋('누군가'에게 '얼마'를 보낸다) 클래스 정의
 class TxOut {
   constructor(address, amount) {
     this.address = address;
@@ -30,24 +33,26 @@ class TxOut {
   }
 }
 
+// 트랜잭션 클래스 정의
 class Transaction {
   constructor(id, txIns, txOuts) {
     this.id = id;
-
     this.txIns = txIns;
     this.txOuts = txOuts;
   }
 }
 
+// 트랜잭션에 들어갈 id값 구하는 녀석
 const getTransactionId = (transaction) => {
+  // id값을 구할 해당 트랜잭션의 인풋들을 다 더하고
   const txInContent = transaction.txIns
     .map((txIn) => txIn.txOutId + txIn.txOutIndex)
     .reduce((a, b) => a + b, "");
-
+  // 아웃풋들도 다 더해서
   const txOutContent = transaction.txOuts
     .map((txOut) => txOut.address + txOut.amount)
     .reduce((a, b) => a + b, "");
-
+  // 그 둘을 더한것을 암호화한 문자열로 반환해서 id로 쓸거임
   return CryptoJS.SHA256(txInContent + txOutContent).toString();
 };
 
@@ -89,15 +94,19 @@ const validateTransaction = (transaction, aUnspentTxOuts) => {
   return true;
 };
 
-// 블록
+// 블록의 트랜잭션들 정상인지 확인해보기
 const validateBlockTransactions = (
   aTransactions,
   aUnspentTxOuts,
   blockIndex
 ) => {
+  // 코인베이스 트랜잭션은 블록에 담긴 트랜잭션들중 [0]번째 요소니까
+  // 변수coinbaseTx에 담아서 코인베이스 검증
   const coinbaseTx = aTransactions[0];
   if (!validateCoinbaseTx(coinbaseTx, blockIndex)) {
-    console.log("invalid coinbase transaction: " + JSON.stringify(coinbaseTx));
+    console.log(
+      "(검증실패) 블록에 들어있는 코인베이스 트랜잭션이 잘못되었습니다"
+    );
     return false;
   }
 
@@ -133,6 +142,7 @@ const hasDuplicates = (txIns) => {
     .includes(true);
 };
 
+// 코인베이스 트랜잭션 검사
 const validateCoinbaseTx = (transaction, blockIndex) => {
   if (transaction == null) {
     console.log(
@@ -241,36 +251,53 @@ const signTxIn = (transaction, txInIndex, privateKey, aUnspentTxOuts) => {
   return signature;
 };
 
+// 공용장부 갱신
 const updateUnspentTxOuts = (aTransactions, aUnspentTxOuts) => {
+  // 새 공용장부 만들기
   const newUnspentTxOuts = aTransactions
     .map((t) => {
+      // 트랜잭션들(aTransactions)의 (map)
       return t.txOuts.map(
+        // 트잭아웃풋들(txOuts)의 (map) 아웃풋, 인덱스를 가지고
         (txOut, index) =>
+          // 새 UTxO(미사용트랜잭션아웃풋) 만들어서
           new UnspentTxOut(t.id, index, txOut.address, txOut.amount)
       );
-    })
+    }) // reduce, concat을 통해 새 배열(UTxOs)을 만들어서 변수newUnspentTxOuts에 저장
     .reduce((a, b) => a.concat(b), []);
+  console.log("ㅎㅎ");
+  console.log(newUnspentTxOuts);
+  console.log("ㅎㅎ");
 
+  // 사용된 트잭아웃풋들 만들기
   const consumedTxOuts = aTransactions
-    .map((t) => t.txIns)
-    .reduce((a, b) => a.concat(b), [])
+    .map((t) => t.txIns) // 트랜잭션들의 인풋들[]을 배열로 만들고 [ [q], [w], [e] ]
+    .reduce((a, b) => a.concat(b), []) // 배열껍데기 벗기고 [ q, w, e ]
+    // 새 UTxO들로 만들어주기 [ qUTxO, wUTxO, eUTxO ]
     .map((txIn) => new UnspentTxOut(txIn.txOutId, txIn.txOutIndex, "", 0));
 
+  console.log("");
+  console.log(consumedTxOuts);
+  console.log(aUnspentTxOuts);
+  // 기존 UTxOs(장부)에서
   const resultingUnspentTxOuts = aUnspentTxOuts
     .filter(
+      //
       (uTxO) => !findUnspentTxOut(uTxO.txOutId, uTxO.txOutIndex, consumedTxOuts)
     )
     .concat(newUnspentTxOuts);
-
+  console.log(resultingUnspentTxOuts);
   return resultingUnspentTxOuts;
 };
 
-// 트랜잭션
+// 공용장부 갱신하기 (공용장부에서 거래내용(aTransactions) 정산해서)
+//                  (갱신한 공용장부 반환)
 const processTransactions = (aTransactions, aUnspentTxOuts, blockIndex) => {
   if (!validateBlockTransactions(aTransactions, aUnspentTxOuts, blockIndex)) {
-    console.log("invalid block transactions");
+    console.log("");
     return null;
   }
+  // 트랜잭션들과 공용장부에
   return updateUnspentTxOuts(aTransactions, aUnspentTxOuts);
 };
 
