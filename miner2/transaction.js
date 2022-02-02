@@ -207,11 +207,13 @@ const getTxInAmount = (txIn, aUnspentTxOuts) => {
   return findUnspentTxOut(txIn.txOutId, txIn.txOutIndex, aUnspentTxOuts).amount;
 };
 
+// UTxOs(공용장부)에서 특정 트랜잭션과 일치하는 UTxO 찾아서 반환
 const findUnspentTxOut = (transactionId, index, aUnspentTxOuts) => {
   return aUnspentTxOuts.find(
     (uTxO) => uTxO.txOutId === transactionId && uTxO.txOutIndex === index
   );
 };
+
 // 코인베이스 트랜잭션 만들어주기
 const getCoinbaseTransaction = (address, blockIndex) => {
   const t = new Transaction();
@@ -257,7 +259,7 @@ const signTxIn = (transaction, txInIndex, privateKey, aUnspentTxOuts) => {
   return signature;
 };
 
-// 공용장부 갱신
+// 공용장부 갱신 (초기, 블록추가될 때, 체인교체될 때 사용됨)
 const updateUnspentTxOuts = (aTransactions, aUnspentTxOuts) => {
   // 새 공용장부 만들기
   const newUnspentTxOuts = aTransactions
@@ -271,9 +273,6 @@ const updateUnspentTxOuts = (aTransactions, aUnspentTxOuts) => {
       );
     }) // reduce, concat을 통해 새 배열(UTxOs)을 만들어서 변수newUnspentTxOuts에 저장
     .reduce((a, b) => a.concat(b), []);
-  console.log("ㅎㅎ");
-  console.log(newUnspentTxOuts);
-  console.log("ㅎㅎ");
 
   // 사용된 트잭아웃풋들 만들기
   const consumedTxOuts = aTransactions
@@ -282,28 +281,26 @@ const updateUnspentTxOuts = (aTransactions, aUnspentTxOuts) => {
     // 새 UTxO들로 만들어주기 [ qUTxO, wUTxO, eUTxO ]
     .map((txIn) => new UnspentTxOut(txIn.txOutId, txIn.txOutIndex, "", 0));
 
-  console.log("");
-  console.log(consumedTxOuts);
-  console.log(aUnspentTxOuts);
-  // 기존 UTxOs(장부)에서
   const resultingUnspentTxOuts = aUnspentTxOuts
     .filter(
-      //
+      // 기존장부에서 사용된 트잭아웃풋들에 해당되지 않는것들만 골라내어
       (uTxO) => !findUnspentTxOut(uTxO.txOutId, uTxO.txOutIndex, consumedTxOuts)
-    )
+    ) // concat으로 새장부와 합쳐서 반환
     .concat(newUnspentTxOuts);
-  console.log(resultingUnspentTxOuts);
+  // 예) 블록이 채굴되면 그 안에 담긴 트랜잭션들의 아웃풋들로는 새 장부를 만들고
+  // 인풋들로는 consumedTxOuts(사용된 트잭아웃풋들)를 만들고
+  // 새 장부에 (기존장부 - consumedTxOuts)를 합쳐서 새 장부를 정식등록한다
   return resultingUnspentTxOuts;
 };
 
 // 공용장부 갱신하기 (공용장부에서 거래내용(aTransactions) 정산해서)
-//                  (갱신한 공용장부 반환)
+//                  (갱신한 공용장부 반환 / 초기, 블록추가될 때, 체인교체될 때 사용됨)
 const processTransactions = (aTransactions, aUnspentTxOuts, blockIndex) => {
   // 블록의 트랜잭션들 검사하기
   if (!validateBlockTransactions(aTransactions, aUnspentTxOuts, blockIndex)) {
     return null;
   }
-  // 트랜잭션들과 공용장부에
+  // 특정 블록에 담긴 트랜잭션들과 공용장부에 있는
   return updateUnspentTxOuts(aTransactions, aUnspentTxOuts);
 };
 
@@ -313,6 +310,7 @@ const toHexString = (byteArray) => {
   }).join("");
 };
 
+// 개인키로 공개키 만들기
 const getPublicKey = (aPrivateKey) => {
   return EC.keyFromPrivate(aPrivateKey, "hex").getPublic().encode("hex");
 };
