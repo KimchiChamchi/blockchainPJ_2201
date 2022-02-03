@@ -118,7 +118,7 @@ const filterTxPoolTxs = (unspentTxOuts, transactionPool) => {
   return _.without(unspentTxOuts, ...removable);
 };
 
-// 트랜잭션 만들어주기 (보낼주소, 코인양, 비밀키, 공용장부, 트랜잭션풀)
+// 트랜잭션 만들어주기 / 매개변수는(받는이주소, 코인양, 비밀키, 공용장부, 트랜잭션풀)
 const createTransaction = (
   receiverAddress,
   amount,

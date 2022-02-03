@@ -57,40 +57,45 @@ const getTransactionId = (transaction) => {
 };
 
 // 트랜잭션 확인 (초기, 블록추가될 때, 체인교체될 때, 트랜잭션 추가될 때 사용됨)
+// 트랜잭션 구조, 트랜잭션id, 트랜잭션 생성 주체의 서명,
+// 트랜잭션의 인풋코인양과 아웃풋코인양의 일치여부 확인
 const validateTransaction = (transaction, aUnspentTxOuts) => {
-  // 트랜잭션 구조 검증하고
+  // 트랜잭션 구조 검증하기
   if (!isValidTransactionStructure(transaction)) {
     return false;
   }
-  // 해당 트랜잭션에 id가 실제 id 맞는지 계산해보고
+  // 해당 트랜잭션에 id가 실제 id 맞는지 계산해보기
   if (getTransactionId(transaction) !== transaction.id) {
     console.log("트랜잭션에 써있는 id가 짭이네요");
     return false;
   }
 
+  // 해당 트랜잭션의 트잭인풋들을 공용장부랑 비교확인해서
+  // 이상있는놈이 하나라도 있으면 false 반환하는 녀석
   const hasValidTxIns = transaction.txIns
-    // 해당 트랜잭션의 트잭인풋을 공용장부랑 비교확인해서 true/false 반환
     .map((txIn) => validateTxIn(txIn, transaction, aUnspentTxOuts))
     .reduce((a, b) => a && b, true);
 
-  // uTxOs 트랜잭션 인풋들 검사해서
+  // uTxOs 트랜잭션 인풋들 검사해서 하나라도 이상이 있으면
   if (!hasValidTxIns) {
-    console.log("some of the txIns are invalid in tx: " + transaction.id);
+    console.log("(검사실패) 트랜잭션의 인풋중에 이상한 인풋이 있어요");
     return false;
   }
 
+  // 총 보유 코인이 얼만지 계산하는 녀석
+  // 공용장부에서 해당 트랜잭션의 인풋과 일치하는 것들(amount코인)을 찾아서 다 더해줌
   const totalTxInValues = transaction.txIns
     .map((txIn) => getTxInAmount(txIn, aUnspentTxOuts))
     .reduce((a, b) => a + b, 0);
 
+  // 총 보내는 코인이 얼만지 계산하는 녀석(실제 보내는 코인 + 거슬러 받을 코인)
   const totalTxOutValues = transaction.txOuts
     .map((txOut) => txOut.amount)
     .reduce((a, b) => a + b, 0);
 
+  // 해당 트랜잭션 내의 (총 보유 코인)과 (실제 보낼 코인+거슬러 받을 코인)이 다르면
   if (totalTxOutValues !== totalTxInValues) {
-    console.log(
-      "totalTxOutValues !== totalTxInValues in tx: " + transaction.id
-    );
+    console.log("(검사실패) 가진 코인과 주고받을 코인의 양이 달라요");
     return false;
   }
 
@@ -98,6 +103,7 @@ const validateTransaction = (transaction, aUnspentTxOuts) => {
 };
 
 // 블록의 트랜잭션들 정상인지 확인해보기 (초기, 블록추가될 때, 체인교체될 때 사용됨)
+// (코인베이스, )
 const validateBlockTransactions = (
   aTransactions,
   aUnspentTxOuts,
@@ -193,26 +199,25 @@ const validateTxIn = (txIn, transaction, aUnspentTxOuts) => {
   );
   // 위와 같은게 하나도 없으면 문제
   if (referencedUTxOut == null) {
-    console.log("referenced txOut not found: " + JSON.stringify(txIn));
+    console.log("(검사실패) 참조된 uTxO가 하나도 없답니다");
     return false;
   }
   // 참조된uTxO의 지갑주소 변수에 저장
   const address = referencedUTxOut.address;
   // 참조된uTxO의 지갑주소를 키쌍으로 변환
   const key = EC.keyFromPublic(address, "hex");
+  // 서명 진퉁인지 확인
+  // 해당 키쌍이(key) 해당 트랜잭션(id)에 알맞은 서명(signature)값이면 true
   const validSignature = key.verify(transaction.id, txIn.signature);
+  // 서명이 짭이면
   if (!validSignature) {
-    console.log(
-      "invalid txIn signature: %s txId: %s address: %s",
-      txIn.signature,
-      transaction.id,
-      referencedUTxOut.address
-    );
+    console.log("(검사실패) 본인의 서명이 아닌 모양입니다");
     return false;
   }
   return true;
 };
 
+//
 const getTxInAmount = (txIn, aUnspentTxOuts) => {
   return findUnspentTxOut(txIn.txOutId, txIn.txOutIndex, aUnspentTxOuts).amount;
 };
@@ -305,13 +310,13 @@ const updateUnspentTxOuts = (aTransactions, aUnspentTxOuts) => {
 };
 
 // 공용장부 갱신하기 (공용장부에서 거래내용(aTransactions) 정산해서)
-//                  (갱신한 공용장부 반환 / 초기, 블록추가될 때, 체인교체될 때 사용됨)
+//                 (갱신한 공용장부 반환 / 초기, 블록추가될 때, 체인교체될 때 사용됨)
 const processTransactions = (aTransactions, aUnspentTxOuts, blockIndex) => {
   // 블록의 트랜잭션들 검사하기
   if (!validateBlockTransactions(aTransactions, aUnspentTxOuts, blockIndex)) {
     return null;
   }
-  // 특정 블록에 담긴 트랜잭션들과 공용장부에 있는
+  // 특정 블록에 담긴 트랜잭션(들)과 공용장부를 가지고 갱신한 새 공용장부를 반환
   return updateUnspentTxOuts(aTransactions, aUnspentTxOuts);
 };
 
