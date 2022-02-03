@@ -6,7 +6,7 @@ const EC = new ecdsa.ec("secp256k1");
 
 const COINBASE_AMOUNT = 50;
 
-// UTxOs(공용장부)에 들어갈 미사용 트랜잭션 아웃풋 클래스 정의
+// uTxOs(공용장부)에 들어갈 미사용 트랜잭션 아웃풋 클래스 정의
 class UnspentTxOut {
   constructor(txOutId, txOutIndex, address, amount) {
     this.txOutId = txOutId;
@@ -56,21 +56,24 @@ const getTransactionId = (transaction) => {
   return CryptoJS.SHA256(txInContent + txOutContent).toString();
 };
 
-// 트랜잭션 확인
+// 트랜잭션 확인 (초기, 블록추가될 때, 체인교체될 때, 트랜잭션 추가될 때 사용됨)
 const validateTransaction = (transaction, aUnspentTxOuts) => {
   // 트랜잭션 구조 검증하고
   if (!isValidTransactionStructure(transaction)) {
     return false;
   }
-  //
+  // 해당 트랜잭션에 id가 실제 id 맞는지 계산해보고
   if (getTransactionId(transaction) !== transaction.id) {
-    console.log("invalid tx id: " + transaction.id);
+    console.log("트랜잭션에 써있는 id가 짭이네요");
     return false;
   }
+
   const hasValidTxIns = transaction.txIns
+    // 해당 트랜잭션의 트잭인풋을 공용장부랑 비교확인해서 true/false 반환
     .map((txIn) => validateTxIn(txIn, transaction, aUnspentTxOuts))
     .reduce((a, b) => a && b, true);
 
+  // uTxOs 트랜잭션 인풋들 검사해서
   if (!hasValidTxIns) {
     console.log("some of the txIns are invalid in tx: " + transaction.id);
     return false;
@@ -94,7 +97,7 @@ const validateTransaction = (transaction, aUnspentTxOuts) => {
   return true;
 };
 
-// 블록의 트랜잭션들 정상인지 확인해보기
+// 블록의 트랜잭션들 정상인지 확인해보기 (초기, 블록추가될 때, 체인교체될 때 사용됨)
 const validateBlockTransactions = (
   aTransactions,
   aUnspentTxOuts,
@@ -178,17 +181,24 @@ const validateCoinbaseTx = (transaction, blockIndex) => {
   return true;
 };
 
+// 트랜잭션 인풋 확인 (초기, 블록추가될 때, 체인교체될 때, 트랜잭션 추가될 때 사용됨)
 const validateTxIn = (txIn, transaction, aUnspentTxOuts) => {
+  // 공용장부에서 해당 트잭인풋과 같은게 있으면 referencedUTxOut(참조된 uTxO)에 저장
   const referencedUTxOut = aUnspentTxOuts.find(
     (uTxO) =>
-      uTxO.txOutId === txIn.txOutId && uTxO.txOutIndex === txIn.txOutIndex
+      // 공용장부의 id === 해당 트잭인풋의 트잭아웃풋 id 이고
+      uTxO.txOutId === txIn.txOutId &&
+      // 공용장부의 트잭아웃풋 인덱스 === 해당 트잭인풋의 트잭아웃풋 인덱스인것을 찾아라
+      uTxO.txOutIndex === txIn.txOutIndex
   );
+  // 위와 같은게 하나도 없으면 문제
   if (referencedUTxOut == null) {
     console.log("referenced txOut not found: " + JSON.stringify(txIn));
     return false;
   }
+  // 참조된uTxO의 지갑주소 변수에 저장
   const address = referencedUTxOut.address;
-
+  // 참조된uTxO의 지갑주소를 키쌍으로 변환
   const key = EC.keyFromPublic(address, "hex");
   const validSignature = key.verify(transaction.id, txIn.signature);
   if (!validSignature) {
@@ -207,7 +217,7 @@ const getTxInAmount = (txIn, aUnspentTxOuts) => {
   return findUnspentTxOut(txIn.txOutId, txIn.txOutIndex, aUnspentTxOuts).amount;
 };
 
-// UTxOs(공용장부)에서 특정 트랜잭션과 일치하는 UTxO 찾아서 반환
+// uTxOs(공용장부)에서 특정 트랜잭션과 일치하는 uTxO 찾아서 반환
 const findUnspentTxOut = (transactionId, index, aUnspentTxOuts) => {
   return aUnspentTxOuts.find(
     (uTxO) => uTxO.txOutId === transactionId && uTxO.txOutIndex === index
@@ -269,17 +279,17 @@ const updateUnspentTxOuts = (aTransactions, aUnspentTxOuts) => {
       return t.txOuts.map(
         // 트잭아웃풋들(txOuts)의 (map) 아웃풋, 인덱스를 가지고
         (txOut, index) =>
-          // 새 UTxO(미사용트랜잭션아웃풋) 만들어서
+          // 새 uTxO(미사용트랜잭션아웃풋) 만들어서
           new UnspentTxOut(t.id, index, txOut.address, txOut.amount)
       );
-    }) // reduce, concat을 통해 새 배열(UTxOs)을 만들어서 변수newUnspentTxOuts에 저장
+    }) // reduce, concat을 통해 새 배열(uTxOs)을 만들어서 변수newUnspentTxOuts에 저장
     .reduce((a, b) => a.concat(b), []);
 
   // 사용된 트잭아웃풋들 만들기
   const consumedTxOuts = aTransactions
     .map((t) => t.txIns) // 트랜잭션들의 인풋들[]을 배열로 만들고 [ [q], [w], [e] ]
     .reduce((a, b) => a.concat(b), []) // 배열껍데기 벗기고 [ q, w, e ]
-    // 새 UTxO들로 만들어주기 [ qUTxO, wUTxO, eUTxO ]
+    // 새 uTxO들로 만들어주기 [ qUTxO, wUTxO, eUTxO ]
     .map((txIn) => new UnspentTxOut(txIn.txOutId, txIn.txOutIndex, "", 0));
 
   const resultingUnspentTxOuts = aUnspentTxOuts

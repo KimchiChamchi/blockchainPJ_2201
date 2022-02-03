@@ -227,10 +227,21 @@ function Port3() {
       <div className="pool_box">
         (대충 수영장)
         {transactionPool
-          ? transactionPool.map((txPool, index) => {
-              return <div className="pool_box-tx">ヽ(^o^)ノ</div>;
+          ? transactionPool.map((txPool) => {
+              return <div className="pool_box-effect">⁽⁽◝(˙꒳˙)◜⁾⁾</div>;
             })
           : null}
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
         <div className="pool_box-effect">~</div>
         <div className="pool_box-effect">~</div>
         <div className="pool_box-effect">~</div>

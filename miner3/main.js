@@ -50,12 +50,12 @@ const initHttpServer = (myHttpPort) => {
     res.send({ unspentTxOuts: unspentTxOuts });
   });
 
-  // UTxOs(공용장부) 불러오기
+  // uTxOs(공용장부) 불러오기
   app.get("/unspentTransactionOutputs", (req, res) => {
     res.send(BC.getUnspentTxOuts());
   });
 
-  // UTxOs(공용장부)에서 내것만 불러오기
+  // uTxOs(공용장부)에서 내것만 불러오기
   app.get("/myUnspentTransactionOutputs", (req, res) => {
     res.send(BC.getMyUnspentTransactionOutputs());
   });

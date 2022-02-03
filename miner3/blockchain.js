@@ -259,6 +259,7 @@ const sendTransaction = (address, amount) => {
   TP.addToTransactionPool(tx, getUnspentTxOuts());
   // 그 트랜잭션풀 방방곡곡 소문내기
   P2P.broadCastTransactionPool();
+  console.log("트랜잭션을 소문낼게요");
   return tx;
 };
 
@@ -418,7 +419,7 @@ const addBlockToChain = (newBlock) => {
   // 새 블록 검증해서 정상이면
   if (isValidNewBlock(newBlock, getLatestBlock())) {
     // (processTransactions)새 블록에 들어갈 트랜잭션들 검증하고
-    // 기존 미사용트랜잭션아웃풋목록(UTxOs/공용장부)에서 새 블록에 담긴 거래들과
+    // 기존 미사용트랜잭션아웃풋목록(uTxOs/공용장부)에서 새 블록에 담긴 거래들과
     // 현재 공용장부 정산해서 갱신한 공용장부 retVal변수에 담기
     const retVal = TX.processTransactions(
       newBlock.data,

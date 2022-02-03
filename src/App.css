@@ -388,7 +388,7 @@ a:hover {
   display: flex;
 }
 .wallet_bublic_key_div-title {
-  min-width: 3rem;
+  min-width: 70px;
 }
 .tx_entry {
   display: flex;
@@ -403,44 +403,104 @@ a:hover {
   min-height: 200px;
   overflow: hidden;
   position: relative;
+  font-size: 11px;
 }
-.pool_box-effect:nth-child(1) {
+.pool_box-effect:nth-of-type(1) {
   position: absolute;
+  top: 20%;
   right: 5%;
 }
-.pool_box-effect:nth-child(2) {
+.pool_box-effect:nth-of-type(2) {
   position: absolute;
+  top: 80%;
   right: 15%;
 }
-.pool_box-effect:nth-child(3) {
+.pool_box-effect:nth-of-type(3) {
   position: absolute;
-  top: 10%;
+  top: 40%;
   right: 30%;
 }
-.pool_box-effect:nth-child(4) {
+.pool_box-effect:nth-of-type(4) {
   position: absolute;
+  top: 60%;
   right: 35%;
 }
-.pool_box-effect:nth-child(5) {
+.pool_box-effect:nth-of-type(5) {
   position: absolute;
+  top: 5%;
   right: 65%;
 }
-.pool_box-effect:nth-child(6) {
+.pool_box-effect:nth-of-type(6) {
   position: absolute;
+  top: 70%;
   right: 70%;
 }
-.pool_box-effect:nth-child(7) {
+.pool_box-effect:nth-of-type(7) {
   position: absolute;
+  top: 60%;
   right: 75%;
 }
-.pool_box-effect:nth-child(8) {
+.pool_box-effect:nth-of-type(8) {
   position: absolute;
+  top: 20%;
   right: 90%;
 }
-.pool_box-tx:nth-child(1) {
+.pool_box-effect:nth-of-type(9) {
   position: absolute;
-  right: 265px;
+  top: 80%;
+  right: 90%;
 }
+.pool_box-effect:nth-of-type(10) {
+  position: absolute;
+  top: 30%;
+  right: 90%;
+}
+.pool_box-effect:nth-of-type(11) {
+  position: absolute;
+  top: 40%;
+  right: 80%;
+}
+.pool_box-effect:nth-of-type(12) {
+  position: absolute;
+  top: 18%;
+  right: 70%;
+}
+.pool_box-effect:nth-of-type(13) {
+  position: absolute;
+  top: 60%;
+  right: 65%;
+}
+.pool_box-effect:nth-of-type(14) {
+  position: absolute;
+  top: 10%;
+  right: 60%;
+}
+.pool_box-effect:nth-of-type(15) {
+  position: absolute;
+  top: 85%;
+  right: 50%;
+}
+.pool_box-effect:nth-of-type(16) {
+  position: absolute;
+  top: 25%;
+  right: 45%;
+}
+.pool_box-effect:nth-of-type(17) {
+  position: absolute;
+  top: 70%;
+  right: 30%;
+}
+.pool_box-effect:nth-of-type(18) {
+  position: absolute;
+  top: 50%;
+  right: 20%;
+}
+.pool_box-effect:nth-of-type(n + 19) {
+  position: absolute;
+  top: 120%;
+  right: 120%;
+}
+
 .auto_mine_box {
   width: 82%;
   display: flex;

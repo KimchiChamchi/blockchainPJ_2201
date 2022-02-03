@@ -30,32 +30,29 @@ const addToTransactionPool = (tx, unspentTxOuts) => {
 /*******************************************************************해석실패 */
 // 새로 갱신될 공용장부에 기존 트랜잭션풀에 있는 인풋이 있는지 검사
 const hasTxIn = (txIn, unspentTxOuts) => {
-  // 공용장부의 트잭아웃풋id === 해당 트잭인풋의 트잭아웃풋id 이면서
+  // 공용장부의   트잭아웃풋id  === 해당 트잭인풋의 트잭아웃풋id 이면서
   // 공용장부의 트잭아웃풋인덱스 === 해당 트잭인풋의 트잭아웃풋인덱스
   // 둘다 해당 되는놈을 찾아 반환해서 변수foundTxIn에 담기
-  console.log("안녕?");
   const foundTxIn = unspentTxOuts.find((uTxO) => {
     return uTxO.txOutId === txIn.txOutId && uTxO.txOutIndex === txIn.txOutIndex;
   });
+  console.log("-=-=-=-=-==-");
+  console.log(foundTxIn);
+  console.log("-=-=-=-=-==-");
   // 해당되는게 없으면
   return foundTxIn !== undefined;
 };
 
 // 트랜잭션 풀 업데이트하기
 const updateTransactionPool = (unspentTxOuts) => {
-  console.log("업데이트 트잭풀");
   const invalidTxs = []; // 제외할 트랜잭션목록
   // 기존 트랜잭션풀의 트랜잭션 개수만큼 반복
   for (const tx of transactionPool) {
-    console.log("나는 for문");
-
     // 그 트랜잭션의 인풋 개수만큼 반복
     for (const txIn of tx.txIns) {
-      console.log("나는 두번째 for문");
       // 그 인풋이 공용장부에
       if (!hasTxIn(txIn, unspentTxOuts)) {
         invalidTxs.push(tx);
-        console.log("나는 hasTxIn 통과");
         break;
       }
     }
@@ -66,6 +63,7 @@ const updateTransactionPool = (unspentTxOuts) => {
       // JSON.stringify(invalidTxs)
     ); // 트랜잭션풀에서 제외할 트랜잭션들은 제외하고 트랜잭션풀에 새로 담아주기
     // _.without(a,b,c...) a배열에서 b,c..등을 제외한 새로운 배열을 반환
+    console.log(invalidTxs);
     transactionPool = _.without(transactionPool, ...invalidTxs);
   }
 };
