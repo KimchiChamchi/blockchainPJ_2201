@@ -13,14 +13,17 @@ function Port3() {
   const [chainBlocks, setChainBlocks] = useState([]); //db불러온거
   const reverse = [...chainBlocks].reverse(); //배열뒤집어주기
   const [shownBlock, setshownBlock] = useState({});
+  const [shownTx, setShownTx] = useState({});
   const [count, setCount] = useState(0);
   const [delay, setDelay] = useState(1000);
   const [isRunning, setIsRunning] = useState(false);
   const [ok, setOk] = useState(false);
   const [transactionPool, setTransactionPool] = useState("");
-  useInterval(() => {
+
+  // 트랜잭션이 생기면 화면에 계속 갱신시킬것
+  useEffect(() => {
     getTransactionPool();
-  }, 3000);
+  }, [transactionPool]);
 
   useInterval(
     () => {
@@ -40,14 +43,10 @@ function Port3() {
   );
 
   const bcMaker = async () => {
-    const data = 블록데이터;
-    if (data.length === 0) {
-      //데이터없으면 리네임
-      return alert(`데이터를 넣어주세용`);
-    }
-    await axios
-      .post(`http://localhost:3003/mineBlock`, { data: [data] })
-      .then((res) => alert(res.data));
+    await axios.post(`http://localhost:3003/mineBlock`).then((res) => {
+      console.log(res.data);
+      alert("블록이 생성돼얻읍니다");
+    });
   };
 
   const getBlockchain = async () => {
@@ -69,21 +68,33 @@ function Port3() {
       .get(`http://localhost:3003/balance`)
       .then((res) => setBalance(res.data.balance));
   };
-  //
+
+  // 트랜잭션 만들기
   const sendTransaction = async () => {
-    await axios
-      .post(`http://localhost:3003/sendTransaction`, {
-        address: MoneyToAddress,
-        amount: Money,
-      })
-      .then((res) => console.log(res.data));
+    if (Money <= 0) {
+      alert("송금액이 잘못되었어요");
+    } else if (MoneyToAddress.length !== 130) {
+      alert("주소가 잘못되었어요 똑바로 좀 하세요");
+    } else {
+      await axios
+        .post(`http://localhost:3003/sendTransaction`, {
+          address: MoneyToAddress,
+          amount: Money,
+        })
+        .then((res) => {
+          console.log(res.data);
+          alert("트랜잭션이 생성되었읍니다");
+        });
+    }
   };
+
   // 트랜잭션풀 불러오기
   const getTransactionPool = async () => {
     await axios
       .get(`http://localhost:3003/transactionPool`)
       .then((res) => setTransactionPool(res.data));
   };
+
   // 서버 멈춰
   const stop = async () => {
     await axios
@@ -91,6 +102,7 @@ function Port3() {
       .then((res) => alert(res.data));
   };
 
+  // 연결된 소켓들 불러오기
   const getpeers = async () => {
     axios.get(`http://localhost:3003/peers`).then((res) => setPeers(res.data));
   };
@@ -98,10 +110,10 @@ function Port3() {
     return setPeers(`연결된 피어가없어요`);
   }
 
+  // 연결할 소켓 추가하기
   const addPeer = async () => {
     const P = peer;
     if (P.length === 0) {
-      //데이터없으면 리네임
       return alert(`peer내용을 넣어주세용`);
     }
     await axios
@@ -118,6 +130,13 @@ function Port3() {
       [block.index]: !shownBlockInfo[block.index],
     }));
   };
+  // 블록 상세정보 펼치기, 접기
+  const togglePool = (block) => {
+    setShownTx((shownTxInfo) => ({
+      ...shownTxInfo,
+      [block.index]: !shownTxInfo[block.index],
+    }));
+  };
 
   // 자동채굴 채굴요청시간 조정
   function handleDelayChange(e) {
@@ -128,7 +147,14 @@ function Port3() {
     <div>
       <Row>
         <Col span={24}>
-          <h1>3003포트</h1>
+          <div className="first_line">
+            <div>
+              <h1>3003포트</h1>
+            </div>
+            <Button style={{ marginTop: 5 }} type="dashed" onClick={stop}>
+              서버, 멈춰!
+            </Button>
+          </div>
         </Col>
       </Row>
       <br />
@@ -138,7 +164,6 @@ function Port3() {
       <Button style={{ marginTop: 5 }} type="dashed" onClick={getBalance}>
         잔액 조회
       </Button>
-      {/* <Button style={{ marginLeft: 40, }} type="dashed" onClick={stop}>서버종료</Button> */}
       <div className="wallet_bublic_key_div">
         <div className="wallet_bublic_key_div-title">
           <b>내 공개키 : </b>
@@ -169,50 +194,53 @@ function Port3() {
         피어 연결목록확인
       </Button>
       <p>
-        {" "}
         <b style={{ marginLeft: 10 }}> peers : </b> {peers}
       </p>
       <hr className="boundary_line"></hr>
-      <Col span={3}>
-        <Input
-          placeholder="얼마면 돼?"
-          type="number"
-          onChange={(e) => {
-            setMoney(e.target.value);
-          }}
-          value={Money}
-        />
-      </Col>
-      <Col span={20}>
-        <Input
-          placeholder="어디다가?"
-          type="text"
-          onChange={(e) => {
-            setMoneyToAddress(e.target.value);
-          }}
-          value={MoneyToAddress}
-        />
-      </Col>
+      <div className="tx_entry">
+        <Col span={3}>
+          얼마면 돼?
+          <Input
+            type="number"
+            onChange={(e) => {
+              setMoney(e.target.value);
+            }}
+            value={Money}
+          />
+        </Col>
+        <Col span={20}>
+          어디다가 보내줄까?
+          <Input
+            type="text"
+            onChange={(e) => {
+              setMoneyToAddress(e.target.value);
+            }}
+            value={MoneyToAddress}
+          />
+        </Col>
+      </div>
       <Button style={{ marginTop: 5 }} type="dashed" onClick={sendTransaction}>
         내 피같은 코인 숑숑 전송
       </Button>
       <hr className="boundary_line"></hr>
-      Pool
-      {/* {transactionPool} */}
-      {transactionPool.map((txPool) => {
-        return txPool.id;
-      })}
+      수영장에서 뛰노는 아이들(tx)이 {transactionPool.length}개 있어요
+      <div className="pool_box">
+        (대충 수영장)
+        {transactionPool
+          ? transactionPool.map((txPool, index) => {
+              return <div className="pool_box-tx">ヽ(^o^)ノ</div>;
+            })
+          : null}
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+        <div className="pool_box-effect">~</div>
+      </div>
       <hr className="boundary_line"></hr>
-      <Col span={20}>
-        <Input
-          placeholder="블록내용을 입력해주세요"
-          type="text"
-          onChange={(e) => {
-            set블록데이터(e.target.value);
-          }}
-          value={블록데이터}
-        />
-      </Col>
       <Button
         style={{ marginTop: 5, marginBottom: 10 }}
         type="dashed"

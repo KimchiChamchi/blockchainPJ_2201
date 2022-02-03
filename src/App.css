@@ -378,6 +378,10 @@ a:hover {
 .boundary_line {
   margin: 20px 0px;
 }
+.first_line {
+  display: flex;
+  justify-content: space-between;
+}
 .wallet_bublic_key_div {
   margin-left: 10px;
   word-break: break-all;
@@ -385,6 +389,57 @@ a:hover {
 }
 .wallet_bublic_key_div-title {
   min-width: 3rem;
+}
+.tx_entry {
+  display: flex;
+}
+.tx_entry > :nth-child(1) {
+  margin-right: 10px;
+}
+.pool_box {
+  background-color: #141286;
+  border-radius: 10px;
+  color: #ffffff;
+  min-height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+.pool_box-effect:nth-child(1) {
+  position: absolute;
+  right: 5%;
+}
+.pool_box-effect:nth-child(2) {
+  position: absolute;
+  right: 15%;
+}
+.pool_box-effect:nth-child(3) {
+  position: absolute;
+  top: 10%;
+  right: 30%;
+}
+.pool_box-effect:nth-child(4) {
+  position: absolute;
+  right: 35%;
+}
+.pool_box-effect:nth-child(5) {
+  position: absolute;
+  right: 65%;
+}
+.pool_box-effect:nth-child(6) {
+  position: absolute;
+  right: 70%;
+}
+.pool_box-effect:nth-child(7) {
+  position: absolute;
+  right: 75%;
+}
+.pool_box-effect:nth-child(8) {
+  position: absolute;
+  right: 90%;
+}
+.pool_box-tx:nth-child(1) {
+  position: absolute;
+  right: 265px;
 }
 .auto_mine_box {
   width: 82%;

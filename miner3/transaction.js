@@ -231,6 +231,7 @@ const getCoinbaseTransaction = (address, blockIndex) => {
   return t;
 };
 
+// signature(서명) 만들기
 const signTxIn = (transaction, txInIndex, privateKey, aUnspentTxOuts) => {
   const txIn = transaction.txIns[txInIndex];
 
