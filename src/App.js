@@ -7,7 +7,7 @@ import {
   News,
   Cryptocurrencies,
   Navbar,
-  // Port1,
+  Port1,
   Port2,
   Port3,
 } from "./components";
@@ -30,9 +30,9 @@ const App = () => (
           <Route exact path="/news">
             <News />
           </Route>
-          {/* <Route exact path="/port1" component={Port1}>
+          <Route exact path="/port1" component={Port1}>
             <Port1 />
-          </Route> */}
+          </Route>
           <Route exact path="/port2" component={Port2}>
             <Port2 />
           </Route>

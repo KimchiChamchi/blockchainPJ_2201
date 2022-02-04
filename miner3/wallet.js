@@ -95,6 +95,7 @@ const createTxOuts = (receiverAddress, myAddress, amount, leftOverAmount) => {
   }
 };
 
+// 공용장부의 내 명의 잔액에서
 const filterTxPoolTxs = (unspentTxOuts, transactionPool) => {
   const txIns = _(transactionPool)
     .map((tx) => tx.txIns)
@@ -119,6 +120,7 @@ const filterTxPoolTxs = (unspentTxOuts, transactionPool) => {
 };
 
 // 트랜잭션 만들어주기 / 매개변수는(받는이주소, 코인양, 비밀키, 공용장부, 트랜잭션풀)
+// ()
 const createTransaction = (
   receiverAddress,
   amount,
@@ -126,11 +128,13 @@ const createTransaction = (
   unspentTxOuts,
   txPool
 ) => {
+  // 내 주소 = 내 비밀키를 가지고 만든 공개키
   const myAddress = TX.getPublicKey(privateKey);
+  // 공용장부에서 내 명의로 된 잔액들 가져오기
   const myUnspentTxOutsA = unspentTxOuts.filter(
     (uTxO) => uTxO.address === myAddress
   );
-
+  //
   const myUnspentTxOuts = filterTxPoolTxs(myUnspentTxOutsA, txPool);
 
   // filter from unspentOutputs such inputs that are referenced in pool

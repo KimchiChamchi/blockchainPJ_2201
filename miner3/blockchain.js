@@ -92,8 +92,8 @@ const getUnspentTxOuts = () => _.cloneDeep(unspentTxOuts);
 
 // 새로만들거나 받은 미사용 트랜잭션 목록(공용장부)로  교체
 const setUnspentTxOuts = (newUnspentTxOut) => {
-  console.log("공용장부(unspentTxouts)를 최신화합니다");
   unspentTxOuts = newUnspentTxOut;
+  console.log("공용장부(unspentTxouts)를 최신화합니다");
 };
 
 // 내 마지막 블록 가져오기
@@ -102,29 +102,41 @@ const getLatestBlock = () => blockchain[blockchain.length - 1];
 // 블록생성 간격 10초
 const BLOCK_GENERATION_INTERVAL = 10;
 
-// 난이도 조절 간격 블록 5개당
+// 난이도 조정 간격 블록 5개당
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 5;
 
 // 나니도 가져오기
 const getDifficulty = (aBlockchain) => {
+  // 마지막 블록 = 블록체인의 길이에서 1을 뺀 인덱스값(길이는 1, 배열 접근하는 인덱스는 0으로 시작하니까)
   const latestBlock = aBlockchain[blockchain.length - 1];
+  // 마지막 블록의 인덱스를 난이도 조정 간격인 5로 나눠떨어지면서 &&
+  // 마지막 블록이 제네시스 블록이 아닌 경우(결론 블록 5개마다)
   if (
     latestBlock.index % DIFFICULTY_ADJUSTMENT_INTERVAL === 0 &&
     latestBlock.index !== 0
   ) {
+    if (latestBlock.difficulty == 0) {
+      return latestBlock.difficulty;
+    }
+    // 난이도를 조정해서 반환하기
     return getAdjustedDifficulty(latestBlock, aBlockchain);
+    // 블록 1~4개까지는 마지막 블록과 동일한 난이도로 유지
   } else {
     return latestBlock.difficulty;
   }
 };
 
-// (마지막 블록이랑 5개 이전 블록 비교하여) 난이도 조절
+// (마지막 블록이랑 5개 이전 블록 비교하여) 난이도 조정
 const getAdjustedDifficulty = (latestBlock, aBlockchain) => {
+  // 난이도 조정 1회만큼 이전 블록 (마지막 블록에서 조정간격인 5개 전 블록을 통해 알수있음)
   const prevAdjustmentBlock =
     aBlockchain[blockchain.length - DIFFICULTY_ADJUSTMENT_INTERVAL];
+  // 예상시간 (난이도 조정을 어떻게 할지 기준점이 되는 시간 50초)
   const timeExpected =
     BLOCK_GENERATION_INTERVAL * DIFFICULTY_ADJUSTMENT_INTERVAL;
+  // 소요시간 (마지막 블록과 5개 이전 블록의 시간차로 구함)
   const timeTaken = latestBlock.timestamp - prevAdjustmentBlock.timestamp;
+
   // 블록 5개가 새로 채굴될 동안 흐른 시간이 25초 미만이면 난이도 1증가
   if (timeTaken < timeExpected / 2) {
     return prevAdjustmentBlock.difficulty + 1;
@@ -137,15 +149,20 @@ const getAdjustedDifficulty = (latestBlock, aBlockchain) => {
   }
 };
 
-// 현재시간을 타임스탬프로
+// 현재시간을 타임스탬프 형식으로
 const getCurrentTimestamp = () => Math.round(new Date().getTime() / 1000);
 
 // 새 블록 생성
 const generateRawNextBlock = (blockData) => {
-  const previousBlock = getLatestBlock();
+  const previousBlock = getLatestBlock(); // 마지막 블록
+  // 현재 블록체인을 통해 난이도 가져오기
   const difficulty = getDifficulty(getBlockchain());
+  // 새 블록의 인덱스는 마지막 블록 인덱스보다 1 큼
   const nextIndex = previousBlock.index + 1;
+  // 현재 시간을 새 블록의 타임스탬프로
   const nextTimestamp = getCurrentTimestamp();
+  // 위 내용들과 블록에 들어갈 코인베이스, 트랜잭션들을 가지고
+  // 알맞는 해시값 찾아 채굴하기
   const newBlock = findBlock(
     nextIndex,
     previousBlock.hash,
@@ -153,7 +170,7 @@ const generateRawNextBlock = (blockData) => {
     blockData,
     difficulty
   );
-  // 블록체인에 채굴한 블록 추가하고 채굴한 블록 전파하기
+  // 블록체인에 채굴한 블록 추가하고 그 블록 전파하기
   if (addBlockToChain(newBlock)) {
     P2P.broadcastLatest();
     return newBlock;
@@ -185,7 +202,7 @@ const generateNextBlock = () => {
   return generateRawNextBlock(blockData);
 };
 
-// 블록 생성하면서 내 트랜잭션도 끼워넣기
+// 블록 생성하면서 내 트랜잭션도 끼워넣기 (사용 안함)
 // (코인베이스트랜잭션과 풀 사이에 채굴자가 임의로 만든 트랜잭션 끼워넣는것)
 const generatenextBlockWithTransaction = (receiverAddress, amount) => {
   if (!TX.isValidAddress(receiverAddress)) {
@@ -194,10 +211,12 @@ const generatenextBlockWithTransaction = (receiverAddress, amount) => {
   if (typeof amount !== "number") {
     throw Error("코인의 type이 number가 아니에요");
   }
+  // 코인베이스 트랜잭션 만들기
   const coinbaseTx = TX.getCoinbaseTransaction(
     WALLET.getPublicFromWallet(),
     getLatestBlock().index + 1
   );
+  // 트랜잭션 만들기
   const tx = WALLET.createTransaction(
     receiverAddress,
     amount,
