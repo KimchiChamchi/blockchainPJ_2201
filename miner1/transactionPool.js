@@ -85,7 +85,7 @@ const getTxPoolIns = (aTransactionPool) => {
 const isValidTxForPool = (tx, aTtransactionPool) => {
   // 트랜잭션풀에서 트랜잭션 인풋들만 가져와서 변수txPoolIns에 저장
   const txPoolIns = getTxPoolIns(aTtransactionPool);
-  // 트랜잭션풀에 있는 인풋들에서 트랜잭션
+  // 트랜잭션풀에 있는 인풋들에서 전달받은 트랜잭션의 인풋들과 같은게 있으면 그거 반환
   const containsTxIn = (txIns, txIn) => {
     return _.find(txPoolIns, (txPoolIn) => {
       return (
@@ -99,11 +99,12 @@ const isValidTxForPool = (tx, aTtransactionPool) => {
   };
   // 전달받은 트랜잭션의 인풋들 개수만큼 반복
   for (const txIn of tx.txIns) {
-    // 전달받은 트랜잭션의 인풋이 트랜잭션풀에 있는 인풋과 같으면
+    // 전달받은 트랜잭션의 인풋이 트랜잭션풀에 있는 인풋과 같으면 중복이므로 false
     if (containsTxIn(txPoolIns, txIn)) {
       return false;
     }
   }
+  // 중복된게 없으면 통과
   return true;
 };
 

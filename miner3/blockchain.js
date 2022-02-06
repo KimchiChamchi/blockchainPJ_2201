@@ -345,10 +345,13 @@ const isValidNewBlock = (newBlock, previousBlock) => {
 
 // 누적 난이도 계산해주는 녀석
 const getAccumulatedDifficulty = (aBlockchain) => {
-  return aBlockchain
-    .map((block) => block.difficulty)
-    .map((difficulty) => Math.pow(2, difficulty))
-    .reduce((a, b) => a + b);
+  return (
+    aBlockchain // 블록체인의 블록마다 난이도를 꺼내와서
+      .map((block) => block.difficulty)
+      // 2^난이도 만큼 누적난이도에 더해주기
+      .map((difficulty) => Math.pow(2, difficulty))
+      .reduce((a, b) => a + b)
+  );
 };
 
 // 타임스탬프 검증하기

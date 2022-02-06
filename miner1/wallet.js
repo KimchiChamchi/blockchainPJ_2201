@@ -146,7 +146,6 @@ const filterTxPoolTxs = (unspentTxOuts, transactionPool) => {
     } else {
       // 해당 uTxO를 제거할uTxO(removable)에 추가
       removable.push(unspentTxOut);
-      console.log("다음!", txIn);
     }
   }
   // 장부에서 제거할uTxO들 제거하고 반환

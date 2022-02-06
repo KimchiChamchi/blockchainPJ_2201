@@ -103,7 +103,6 @@ const validateTransaction = (transaction, aUnspentTxOuts) => {
 };
 
 // 블록의 트랜잭션들 정상인지 확인해보기 (초기, 블록추가될 때, 체인교체될 때 사용됨)
-// (코인베이스, )
 const validateBlockTransactions = (
   aTransactions,
   aUnspentTxOuts,
@@ -112,6 +111,7 @@ const validateBlockTransactions = (
   // 코인베이스 트랜잭션은 블록에 담긴 트랜잭션들중 [0]번째 요소니까
   // 변수coinbaseTx에 담아서 코인베이스 검증
   const coinbaseTx = aTransactions[0];
+  // 코인베이스 트랜잭션 검사
   if (!validateCoinbaseTx(coinbaseTx, blockIndex)) {
     console.log(
       "(검증실패) 블록에 들어있는 코인베이스 트랜잭션이 잘못되었습니다"
@@ -119,13 +119,17 @@ const validateBlockTransactions = (
     return false;
   }
 
-  // check for duplicate txIns. Each txIn can be included only once
+  // 트랜잭션들의 인풋들만 빼내서 배열로 담기
+  /* 예) [[tx0],[tx1],[tx2]...]를 map으로 [[tx0의txIns],[tx1의txIns]...]로,
+         다시 그걸 .flatten().value()로 
+         [tx0의txIn0,tx0의txIn1,tx0의txIn3,tx1의txIn0,tx1의txIn1,tx2의tx0...] */
   const txIns = _(aTransactions)
     .map((tx) => tx.txIns)
     .flatten() // 배열 안의 배열을 1깊이? 1수준? 만큼 풀어주는 녀석
     .value(); // .flatten()의 결과는 객체임 .value()는 그 객체의 값을 추출하는녀석
   // .flatten().value() -> [ [[a],[b]],[c] ] -> [[a,b],c]
 
+  // 트랜잭션들에서 빼온 인풋들중에 중복되는게 있으면 안됨
   if (hasDuplicates(txIns)) {
     return false;
   }
@@ -138,18 +142,26 @@ const validateBlockTransactions = (
     .reduce((a, b) => a && b, true);
 };
 
+// 중복찾기
 const hasDuplicates = (txIns) => {
+  // 트랜잭션들에서 빼온 인풋들의 txOutId+txOutIndex 값이 같은것끼리 묶어서 객체로 저장
   const groups = _.countBy(txIns, (txIn) => txIn.txOutId + txIn.txOutIndex);
-  return _(groups)
-    .map((value, key) => {
-      if (value > 1) {
-        console.log("duplicate txIn: " + key);
-        return true;
-      } else {
-        return false;
-      }
-    })
-    .includes(true);
+  // 그것들을(객체) 맵으로 하나씩 검토
+  return (
+    _(groups)
+      // value는 트랜잭션들에서 빼온 인풋들의 txOutId+txOutIndex 값 중 하나
+      // key는 그냥 위 값들의 인덱스
+      .map((value, key) => {
+        // 검토하는 그 객체가 1보다 크면(중복이 있으면)
+        if (value > 1) {
+          console.log("중복된 트랜잭션 인풋이 있어요");
+          return true;
+        } else {
+          return false;
+        }
+      }) // 위에 map을 통해 나온 true또는 false로 이루어진 배열에 true가 하나라도 있으면
+      .includes(true) // true, 없으면 false 반환
+  );
 };
 
 // 코인베이스 트랜잭션 검사 (processTransactions 작동할 때 사용됨)
@@ -247,7 +259,7 @@ const getCoinbaseTransaction = (address, blockIndex) => {
   return t;
 };
 
-// 서명하기(signature)
+// 서명하기(signature) (트랜잭션 만들때 사용됨)
 const signTxIn = (transaction, txInIndex, privateKey, aUnspentTxOuts) => {
   // txInIndex는 .map()을 통해 트랜잭션 안의 인풋들을 모두 접근하도록 해줄것임
   // 고로 txIn는 해당 인풋. 처음은 0번 인덱스 인풋, 다음은 1번인덱스 인풋...
@@ -261,23 +273,24 @@ const signTxIn = (transaction, txInIndex, privateKey, aUnspentTxOuts) => {
     txIn.txOutIndex,
     aUnspentTxOuts
   );
+  // 참조된uTxO가 없으면 서명못함
   if (referencedUnspentTxOut == null) {
-    console.log("could not find referenced txOut");
+    console.log("참조된 uTxO가 없어요");
     throw Error();
-  }
+  } // 참조된주소 = 참조된uTxO의 지갑주소
   const referencedAddress = referencedUnspentTxOut.address;
-
+  // 내 비밀키로 만든 공개키랑 참조된주소가 다르면 서명못함
   if (getPublicKey(privateKey) !== referencedAddress) {
     console.log(
-      "trying to sign an input with private" +
-        " key that does not match the address that is referenced in txIn"
+      "내 개인키로 만든 공개키(주소)와 내가 서명할 인풋의 공개키(주소)가 달라요"
     );
     throw Error();
-  }
+  } // 위 조건들에 걸리지 않으면 인풋에 서명하기
+  // 내 비밀키로부터 키쌍을 만들고
   const key = EC.keyFromPrivate(privateKey, "hex");
+  // 서명 만들어서
   const signature = toHexString(key.sign(dataToSign).toDER());
-
-  return signature;
+  return signature; // 서명 반환
 };
 
 // 공용장부 갱신 (초기, 블록추가될 때, 체인교체될 때 사용됨)
