@@ -76,8 +76,9 @@ const updateTransactionPool = (unspentTxOuts) => {
 const getTxPoolIns = (aTransactionPool) => {
   return _(aTransactionPool)
     .map((tx) => tx.txIns)
-    .flatten()
-    .value();
+    .flatten() // 배열 안의 배열을 1깊이? 1수준? 만큼 풀어주는 녀석
+    .value(); // .flatten()의 결과는 객체임 .value()는 그 객체의 값을 추출하는녀석
+  // .flatten().value() -> [ [[a],[b]],[c] ] -> [[a,b],c]
 };
 
 // 전달받은 트랜잭션이 트랜잭션풀에 있는 트랜잭션들과 중복되는지 검사하기

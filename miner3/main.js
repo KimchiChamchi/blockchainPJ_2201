@@ -24,7 +24,6 @@ const initHttpServer = (myHttpPort) => {
 
   // 블록체인 정보
   app.get("/blocks", (req, res) => {
-    console.log(BC.getBlockchain());
     res.send(BC.getBlockchain());
   });
 
@@ -96,10 +95,10 @@ const initHttpServer = (myHttpPort) => {
     res.send({ address: address });
   });
 
-  // 채굴할때 코인베이스랑 풀 사이에 트랜잭션 하나 끼워넣고 채굴하기 (안씀)
+  // 채굴할때 풀은 냅두고 코인베이스랑 채굴자의 트랜잭션만 만들어 넣고 채굴하기(안씀)
   app.post("/mineTransaction", (req, res) => {
     const address = req.body.address;
-    const amount = req.body.amount;
+    const amount = parseInt(req.body.amount);
     try {
       const resp = BC.generatenextBlockWithTransaction(address, amount);
       res.send(resp);

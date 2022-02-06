@@ -87,6 +87,24 @@ function Port3() {
         });
     }
   };
+  // 풀은 냅두고 내 트랜잭션만 만들고 채굴
+  const mineTransaction = async () => {
+    if (Money <= 0) {
+      alert("송금액이 잘못되었어요");
+    } else if (MoneyToAddress.length !== 130) {
+      alert("주소가 잘못되었어요 똑바로 좀 하세요");
+    } else {
+      await axios
+        .post(`http://localhost:3003/mineTransaction`, {
+          address: MoneyToAddress,
+          amount: Money,
+        })
+        .then((res) => {
+          console.log(res.data);
+          alert("치사하게 채굴하였어요");
+        });
+    }
+  };
 
   // 트랜잭션풀 불러오기
   const getTransactionPool = async () => {
@@ -221,6 +239,9 @@ function Port3() {
       </div>
       <Button style={{ marginTop: 5 }} type="dashed" onClick={sendTransaction}>
         내 피같은 코인 숑숑 전송
+      </Button>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={mineTransaction}>
+        내 트랜잭션만 넣을어서 채굴할거임
       </Button>
       <hr className="boundary_line"></hr>
       수영장에서 뛰노는 아이들(tx)이 {transactionPool.length}개 있어요

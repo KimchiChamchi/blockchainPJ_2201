@@ -122,8 +122,9 @@ const validateBlockTransactions = (
   // check for duplicate txIns. Each txIn can be included only once
   const txIns = _(aTransactions)
     .map((tx) => tx.txIns)
-    .flatten() // 배열 안의 배열을 풀어주는 녀석 -> [[a],[b],[c]] -> [a,b,c]
-    .value();
+    .flatten() // 배열 안의 배열을 1깊이? 1수준? 만큼 풀어주는 녀석
+    .value(); // .flatten()의 결과는 객체임 .value()는 그 객체의 값을 추출하는녀석
+  // .flatten().value() -> [ [[a],[b]],[c] ] -> [[a,b],c]
 
   if (hasDuplicates(txIns)) {
     return false;
@@ -217,7 +218,7 @@ const validateTxIn = (txIn, transaction, aUnspentTxOuts) => {
   return true;
 };
 
-//
+// 공용장부에서 특정 인풋과 일치하는것 뱉어내기
 const getTxInAmount = (txIn, aUnspentTxOuts) => {
   return findUnspentTxOut(txIn.txOutId, txIn.txOutIndex, aUnspentTxOuts).amount;
 };
@@ -246,11 +247,15 @@ const getCoinbaseTransaction = (address, blockIndex) => {
   return t;
 };
 
-// signature(서명) 만들기
+// 서명하기(signature)
 const signTxIn = (transaction, txInIndex, privateKey, aUnspentTxOuts) => {
+  // txInIndex는 .map()을 통해 트랜잭션 안의 인풋들을 모두 접근하도록 해줄것임
+  // 고로 txIn는 해당 인풋. 처음은 0번 인덱스 인풋, 다음은 1번인덱스 인풋...
   const txIn = transaction.txIns[txInIndex];
 
+  // 서명할 데이터
   const dataToSign = transaction.id;
+  // 참조된uTxO = 해당인풋과 일치하는 uTxO
   const referencedUnspentTxOut = findUnspentTxOut(
     txIn.txOutId,
     txIn.txOutIndex,

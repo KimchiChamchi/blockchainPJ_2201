@@ -202,8 +202,8 @@ const generateNextBlock = () => {
   return generateRawNextBlock(blockData);
 };
 
-// 블록 생성하면서 내 트랜잭션도 끼워넣기 (사용 안함)
-// (코인베이스트랜잭션과 풀 사이에 채굴자가 임의로 만든 트랜잭션 끼워넣는것)
+// 코인베이스트랜잭션과 채굴자의 트랜잭션만 만들어 가지고 블록 생성
+// (풀에 들어있던 트랜잭션들은 그냥 냅두는거) (사용 안함)
 const generatenextBlockWithTransaction = (receiverAddress, amount) => {
   if (!TX.isValidAddress(receiverAddress)) {
     throw Error("주소가 잘못되었어요");
@@ -224,7 +224,7 @@ const generatenextBlockWithTransaction = (receiverAddress, amount) => {
     getUnspentTxOuts(),
     TP.getTransactionPool()
   );
-
+  // 코인베이스랑 방금 만든 트랜잭션이랑 블록 데이터로 넣고 채굴
   const blockData = [coinbaseTx, tx];
   return generateRawNextBlock(blockData);
 };
