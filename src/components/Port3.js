@@ -55,6 +55,8 @@ function Port3() {
       .then((res) => setChainBlocks(res.data));
   };
 
+  //
+
   // 지갑 공개키 받아오기
   const getAddress = async () => {
     await axios
@@ -67,6 +69,13 @@ function Port3() {
     await axios
       .get(`http://localhost:3003/balance`)
       .then((res) => setBalance(res.data.balance));
+  };
+
+  // 지갑 없애기
+  const deleteWallet = async () => {
+    await axios
+      .get(`http://localhost:3003/deleteWallet`)
+      .then((res) => alert("가지고 있던 지갑을 분.쇄.하였습니다"));
   };
 
   // 트랜잭션 만들기
@@ -84,9 +93,11 @@ function Port3() {
         .then((res) => {
           console.log(res.data);
           alert("트랜잭션이 생성되었읍니다");
-        });
+        })
+        .catch((e) => alert("안돼 거지야"));
     }
   };
+
   // 풀은 냅두고 내 트랜잭션만 만들고 채굴
   const mineTransaction = async () => {
     if (Money <= 0) {
@@ -181,6 +192,9 @@ function Port3() {
       </Button>
       <Button style={{ marginTop: 5 }} type="dashed" onClick={getBalance}>
         잔액 조회
+      </Button>
+      <Button style={{ marginTop: 5 }} type="dashed" onClick={deleteWallet}>
+        지.갑.파.괘.
       </Button>
       <div className="wallet_bublic_key_div">
         <div className="wallet_bublic_key_div-title">
