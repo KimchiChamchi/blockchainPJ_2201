@@ -84,9 +84,11 @@ function Port1() {
         .then((res) => {
           console.log(res.data);
           alert("트랜잭션이 생성되었읍니다");
-        });
+        })
+        .catch((e) => alert("안돼 거지야"));
     }
   };
+
   // 풀은 냅두고 내 트랜잭션만 만들고 채굴
   const mineTransaction = async () => {
     if (Money <= 0) {

@@ -27,12 +27,13 @@ const initHttpServer = (myHttpPort) => {
     res.send(BC.getBlockchain());
   });
 
-  //
+  // 해당 해시값인 블록 정보 불러오기
   app.get("/block/:hash", (req, res) => {
     const block = _.find(BC.getBlockchain(), { hash: req.params.hash });
     res.send(block);
   });
 
+  // 해당 id값인 트랜잭션 정보 불러오기
   app.get("/transaction/:id", (req, res) => {
     const tx = _(BC.getBlockchain())
       .map((blocks) => blocks.data)
@@ -41,6 +42,7 @@ const initHttpServer = (myHttpPort) => {
     res.send(tx);
   });
 
+  // 해당 주소의 uTxO들 불러오기
   app.get("/address/:address", (req, res) => {
     const unspentTxOuts = _.filter(
       BC.getUnspentTxOuts(),
@@ -146,6 +148,11 @@ const initHttpServer = (myHttpPort) => {
   app.post("/addPeer", (req, res) => {
     P2P.connectToPeers(req.body.peer);
     res.send();
+  });
+
+  // 지갑 없애기
+  app.get("/deleteWallet", (req, res) => {
+    res.send(WALLET.deleteWallet());
   });
 
   // 서버 멈춰
