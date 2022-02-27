@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { Row, Col, Badge, Card, Input, Button } from "antd";
-
+ 
 function Port1() {
   const [블록데이터, set블록데이터] = useState(""); //생성데이터
   const [peer, setPeer] = useState(""); //생성데이터
